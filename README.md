@@ -5,7 +5,7 @@
 - Samy EHSANI
 - Romain GOLDENCHTEIN
 - Jasser CHATBA
-- Mohamed Aazouz
+- Mohamed AAZOUZ
 
 **Analyse des données de combats UFC**
 
