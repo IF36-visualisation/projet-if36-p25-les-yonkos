@@ -18,6 +18,12 @@ Nous avons choisi ce dataset pour explorer les facteurs qui influencent les rés
 
 **Données**
 
+**Jeu de données 1 :**
+
+**Source :**  [Dataset 1](https://github.com/IF36-visualisation/projet-if36-p25-les-yonkos/blob/8ccc7471f0bf261cf8f63c86eb9681003086312d/data/complete_ufc_data.csv)
+
+**Format :** CSV
+
 **Structure du jeu de données :**
 Ce dataset contient 7340 entrées et 42 colonnes.
 
@@ -49,5 +55,50 @@ Ce dataset contient 7340 entrées et 42 colonnes.
 | fighter1/2_takedown_defence                    | Pourcentage de défense contre les mises au sol.         | Float        |
 | fighter1/2_submission_avg_attempted_per15m     | Tentatives de soumission par 15 minutes.                | Float        |
 | events_extract_ts / odds_extract_ts            | Horodatage de l'extraction des événements et des cotes. | Date-Time    |
+
+**Catégories :**
+Informations sur l’événement
+Informations sur le combat 
+Information sur les combattants
+
+
+**Jeu de données 2 :**
+
+**Source :** [Dataset 2](https://github.com/IF36-visualisation/projet-if36-p25-les-yonkos/blob/8ccc7471f0bf261cf8f63c86eb9681003086312d/data/pro_mma_fighters.csv)
+
+**Format :** CSV
+
+**Structure du jeu de données :**
+Le jeu de données contient 5151 entrées (combattants) et 22 colonnes. 
+
+**Colonnes de données :**
+
+| Caractéristiques        | Descriptions                                           | Type              |
+|-------------------------|--------------------------------------------------------|-------------------|
+| url                     | URL du profil du combattant.                          | String            |
+| fighter_name            | Nom complet du combattant.                            | String            |
+| nickname                | Surnom du combattant.                                 | String            |
+| birth_date              | Date de naissance du combattant.                      | Date (YYYY-MM-DD) |
+| age                     | Âge actuel du combattant.                             | Integer           |
+| death_date              | Date de décès (si applicable).                        | Date (YYYY-MM-DD) |
+| location                | Ville de résidence ou d’origine du combattant.        | String            |
+| country                 | Pays d’origine.                                       | String            |
+| height                  | Taille du combattant (en cm ou en pieds/pouces).      | Float             |
+| weight                  | Poids du combattant (en livres ou kg).                | Float             |
+| association             | Club ou équipe d’entraînement.                        | String            |
+| weight_class            | Catégorie de poids.                                   | String            |
+| wins                    | Nombre total de victoires.                            | Integer           |
+| wins_ko                 | Nombre de victoires par KO.                           | Integer           |
+| wins_submission         | Nombre de victoires par soumission.                   | Integer           |
+| wins_decision           | Nombre de victoires par décision.                     | Integer           |
+| wins_other              | Autres types de victoires.                            | Integer           |
+| lossess                 | Nombre total de défaites *(probablement une faute de frappe)*. | Integer   |
+| losses_ko              | Défaites par KO.                                       | Integer           |
+| losses_submission       | Défaites par soumission.                              | Integer           |
+| losses_decision         | Défaites par décision.                                | Integer           |
+| losses_other            | Autres types de défaites.                             | Integer           |
+
+**Catégories :**
+Information sur les combattants
 
 
