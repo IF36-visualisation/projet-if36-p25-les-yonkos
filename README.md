@@ -192,18 +192,21 @@ Notre objectif est d'explorer les facteurs qui influencent les résultats des co
    L’objectif est d’obtenir des informations permettant d’identifier une tendance générale, d’analyser et comprendre la distribution des fins de combats par round.
 
    **- Interrogations :** 
-   Durant quel round la majorité des combats se termine-t-elle ?
-   Y a-t-il un round spécifique où les combats ont tendance à s’arrêter plus souvent ?
-   Est-ce que certains rounds sont rarement atteints, ce qui pourrait indiquer des KO précoces ou une domination rapide (ex : victoire par soumission) ?
+   Durant quel round la majorité des combats se termine-t-elle ?<br>
+   Y a-t-il un round spécifique où les combats ont tendance à s’arrêter plus souvent ?<br>
+   Est-ce que certains rounds sont rarement atteints, ce qui pourrait indiquer des KO précoces ou une domination rapide (ex : victoire par soumission) ?<br>
 
-   **- Variables à comparer :** 
+   **- Variables à comparer :**
+   
    round (valeurs de 1 à 5)
 
    **- Visualisation :**
+   
    Pour répondre à cette question, le graphique le plus adapté est l’histogramme, car on désire compter le nombre de combats terminés par round et comparer la fréquence de chaque round. De plus, les rounds étant des 
    variables discrètes, ils se prêtent particulièrement bien à une visualisation par histogramme.
 
-   **- Limites/problèmes :** 
+   **- Limites/problèmes :**
+   
    Il y a deux types de combats : les combats en 3 rounds (une grande partie des combats) et les combats en 5 rounds (souvent l'événement principal et le combat de la ceinture). Il faudrait peut-être normaliser ou filtrer 
    cela.
 
@@ -212,22 +215,26 @@ Notre objectif est d'explorer les facteurs qui influencent les résultats des co
    On cherche ici à savoir si l’allonge à un impact sur le déroulé du combat. Les combats sont organisés en catégories de poids, et non pas en catégories d’allonge : chaque combattant peut donc avoir une allonge différente.
 
    **- Interrogations :**
-   Un combattant devrait-il accepter un combat face à un adversaire disposant d’une plus grande allonge ?
+   
+   Un combattant devrait-il accepter un combat face à un adversaire disposant d’une plus grande allonge ?<br>
    Avoir une grande allonge pousse-t-elle le combattant à utiliser son striking, ou tenter des takedowns ?
 
-   **- Variables à comparer :** 
-   Allonge : fighter1_reach / fighter2_reach
-   Coups portés : fighter1_sig_strikes_landed_pm fighter2_sig_strikes_landed_pm
-   Takedowns : fighter1_takedown_avg_per15m / fighter2_takedown_avg_per15m
-   Resultat du combat : outcome
+   **- Variables à comparer :**
+   
+   Allonge : fighter1_reach / fighter2_reach<br>
+   Coups portés : fighter1_sig_strikes_landed_pm fighter2_sig_strikes_landed_pm<br>
+   Takedowns : fighter1_takedown_avg_per15m / fighter2_takedown_avg_per15m<br>
+   Resultat du combat : outcome 
 
    **- Visualisation :**
+   
    Un boxplot pour voir le résultat du combat en fonction de l’allonge du combattant
    Un scatterplot pour voir si une meilleure allonge engendre plus de striking
    Un autre scatterplot pour voir si elle engendre plus de takedowns
    Un barplot pour vérifier les taux de victoire en fonction de la différence d’allonge des combattants (par exemple quand un combattant à -10 en allonge par rapport à son adversaire, -5…)
 
-   **- Limites/problèmes :** 
+   **- Limites/problèmes :**
+   
 Les visualisations proposées permettent d’observer des tendances générales, mais elles ne prennent pas en compte d’autres variables réels comme le style de combat, l’expérience ou la stratégie adoptée. De plus, une corrélation visuelle ne signifie pas forcément qu’il y a un lien de cause à effet entre l’allonge et l’issue du combat.
 
 3. **Quel type de garde est la plus dominante (southpaw, orthodox...) ?**
@@ -246,17 +253,21 @@ Les visualisations proposées permettent d’observer des tendances générales,
      Excellente mobilité latérale et jeu de jambes
 
    **- Interrogations :**
-   Quelle garde est la plus utilisée à l’UFC ?
+   
+   Quelle garde est la plus utilisée à l’UFC ?<br>
    Quelle garde a le meilleur taux de victoire ?
 
-   **- Variables à comparer :** 
-   La garde utilisée lors d'un combat : fighter1_stance, fighter2_stance
+   **- Variables à comparer :**
+   
+   La garde utilisée lors d'un combat : fighter1_stance<br> fighter2_stance<br>
    Resultat du combat : outcome
 
    **- Visualisation :**
+   
    Un multi-set bar chart avec pour chaque garde une barre représentant le nombre de combats durant lesquels la garde a été utilisée et une autre barre représentant le nombre de victoires.
 
    **- Limites/problèmes :**
+   
    La cohérence de cette visualisation peut être faussée par les combattants de grappling (sol) qui utilisent une garde pour commencer un combat mais qui l’abandonnent très vite pour amener leur adversaire au sol. 
 
 ### Statistiques, prédictions et côtes
@@ -266,19 +277,23 @@ Les visualisations proposées permettent d’observer des tendances générales,
    L'objectif est d'analyser la répartition des côtes et identifier la fréquence à laquelle le "favori" remporte effectivement le combat. Pareil pour les “underdog”
 
    **- Interrogations :**
-    Qu’est-ce qui définit un favori ou un underdog dans les prédictions des bookmakers ? Nous voulons comparer ces classifications avec les résultats réels des combats.
-   Les cotes affichées avant un combat correspondent-elles globalement aux issues réelles des rencontres ?
+   
+    Qu’est-ce qui définit un favori ou un underdog dans les prédictions des bookmakers ? Nous voulons comparer ces classifications avec les résultats réels des combats.<br>
+   Les cotes affichées avant un combat correspondent-elles globalement aux issues réelles des rencontres ?<br>
    Existe-t-il des cas significatifs où l’issue d’un combat contredit systématiquement le classement favori/underdog (par exemple, des surprises répétées) ?
 
-   **- Variables à comparer :** 
-   favourite / underdog, favourite_odds / underdog_odds, betting_outcome, round
+   **- Variables à comparer :**
+   
+   favourite / underdog<br> favourite_odds<br> underdog_odds<br> betting_outcome<br> round
    Comparer la prédiction avec le résultat réel (taux de prédiction correct, erreur moyenne des cotes, etc.).
 
    **- Visualisation :**
+   
    Un graphique en barres qui montre pour chaque catégorie (favori/underdog), le nombre de combats gagnés et perdus peut être affiché côte à côte ou en empilé. Cela permet directement de visualiser la proportion des cotes réellement respectées.
    Un scatterplot avec ligne de tendance qui montre avec les points les cotes en fonction de la victoire en nombre de rounds (nombres négatifs si défaite ?). Cela permettrait aussi de voir s'il y a une relation entre les côtes et le nombre de rounds pour obtenir la victoire.
 
    **- Limites/problèmes :**
+   
    S’il y a des circonstances particulières d’un combat non reflétées dans la cote initiale qui font que la victoire est bien plus probable (ou moins probable).
 
 ### Facteur géographique
@@ -288,23 +303,27 @@ Les visualisations proposées permettent d’observer des tendances générales,
    On veut identifier si le pays d'origine, la ville, ou l’association/camp d’entraînement influencent le style de combat d’un combattant ? Autrement dit : est-ce que certains pays/camps forment des combattants plus portés sur le striking, d'autres sur le grappling, d'autres plus défensifs ou agressifs ?
 
    **- Interrogations :**
-    Y a-t-il des pays qui produisent des profils très offensifs (volume élevé, faible défense) ?
-   Certains camps forment-ils des grapplers plus que des strikers ?
-   Les combattants issus d’Amérique du Sud encaissent-ils plus de coups ?
-   Les combattants européens ont-ils une meilleure défense de takedown que les Asiatiques ?
-   Les combattants d’une même région (ex: Dagestan) partagent-ils un même profil statistique ?
+   
+    Y a-t-il des pays qui produisent des profils très offensifs (volume élevé, faible défense) ?<br>
+   Certains camps forment-ils des grapplers plus que des strikers ?<br>
+   Les combattants issus d’Amérique du Sud encaissent-ils plus de coups ?<br>
+   Les combattants européens ont-ils une meilleure défense de takedown que les Asiatiques ?<br>
+   Les combattants d’une même région (ex: Dagestan) partagent-ils un même profil statistique ?<br>
 
    **- Variables à comparer :**
-   Style offensif : sig_strikes_landed_pm / sig_strikes_accuracy / takedown_avg_per15m
-   Style défensif : sig_strikes_absorbed_pm / sig_sirikes_defended / takedown_defence
+   
+   Style offensif : sig_strikes_landed_pm / sig_strikes_accuracy / takedown_avg_per15m<br>
+   Style défensif : sig_strikes_absorbed_pm / sig_sirikes_defended / takedown_defence<br>
    Informations géographiques : country / association
 
    **- Visualisation :**
+   
    Boxplots par pays (ou par camp) pour chaque variable, pour donner une idée du style offensif moyen par région.
    Radar charts pour comparer les profils moyens de certains pays, en faisant la moyenne des 6 variables clés listées plus haut par pays. Ça permettrait de comparer visuellement les profils types de combattants brésiliens vs russes vs américains...
    Heatmaps pour apercevoir des corrélations entre le pays/camps et les 6 variables
 
    **- Limites/problèmes :**
+   
    Les visualisations peuvent masquer la diversité individuelle des combattants d’un même pays ou camp. Certaines régions peuvent aussi être sous-représentées dans les données, rendant les moyennes peu fiables ou biaisées. Enfin, le style peut dépendre de l’adversaire ou du contexte du combat, ce que les visus ne capturent pas.
 
 ### Evolutions et carrières des combattants
@@ -314,22 +333,25 @@ Les visualisations proposées permettent d’observer des tendances générales,
    On cherche à comprendre comment l’âge, le nombre de coups encaissés, la fréquence des combats ou la catégorie de poids impactent la durée de carrière.
 
    **- Interrogations :**
-   Y a-t-il un lien entre le nombre de combats et la durée de carrière ? Et si un combattant fait énormément de combat sur une courte durée, sa carrière finit-elle plus vite ?
-   Y a-t-il un lien entre les catégories de poids ou la taille et la durée de carrière moyenne des combattants ?
-   Un combattant ayant reçu beaucoup de coups fait-il une carrière plus courte ?
-   Un combattant ayant reçu beaucoup de KO fait-il une carrière plus courte ?
+   Y a-t-il un lien entre le nombre de combats et la durée de carrière ? Et si un combattant fait énormément de combat sur une courte durée, sa carrière finit-elle plus vite ?<br>
+   Y a-t-il un lien entre les catégories de poids ou la taille et la durée de carrière moyenne des combattants ?<br>
+   Un combattant ayant reçu beaucoup de coups fait-il une carrière plus courte ?<br>
+   Un combattant ayant reçu beaucoup de KO fait-il une carrière plus courte ?<br>
    Un combattant ayant eu beaucoup de défaites fait-il une carrière plus courte ? Et au contraire, faire beaucoup de victoires signifie-t-il toujours faire une carrière plus longue ?
 
    **- Variables à comparer :**
-   fighter1/2_dob, event_date (pour déduire l’âge exact et les périodes d’inactivités), fighter1/2_height, weight_class, method, outcome, fighter1/2_sig_strikes_landed_pm, fighter1/2_sig_strikes_absorbed_pm
+   
+   fighter1/2_dob, event_date (pour déduire l’âge exact et les périodes d’inactivités)<br> fighter1/2_height<br> weight_class<br> method<br> outcome<br> fighter1/2_sig_strikes_landed_pm<br> fighter1/2_sig_strikes_absorbed_pm<br>
    Regrouper les combattants par tranche d’âge, ou par niveau d’exposition aux coups encaissés pour observer s’il existe des patterns récurrents peut être une bonne idée.
 
    **- Visualisation :**
+   
    Un heatmap pour montrer la corrélation directe entre chaque facteur. Par exemple, s’il existe un lien direct entre l’âge ou la taille et le nombre de coups reçus. À partir de là, on peut évoluer sur d’autres visualisations où il y a des corrélations.
    Pourquoi pas séparer en 3 catégories de longévité de carrière et regarder pour chaque le nombre de coups et KO reçus durant les premières années.
    Scatterplot (avec courbe de tendance) pour montrer comment évolue le nombre de combats en fonction de l’âge des combattants avec une longue carrière.
 
    **- Limites/problèmes :**
+   
    Certains facteurs peuvent être corrélés entre eux (par exemple, âge et expérience) rendant plus difficile l’isolation des effets individuels. Aussi, l’analyse de ces effets peut nécessiter des approches complexes,
    surtout lorsque plusieurs variables interagissent simultanément. En effet, la question est multifactorielle. Chaque combattant pouvant évoluer différemment et accéder à sa carrière à tout moment, il est difficile de
    dire qu’un critère est absolument plus important qu’un autre ; mais des tendances peuvent se dessiner.
@@ -341,34 +363,38 @@ Les visualisations proposées permettent d’observer des tendances générales,
    De plus, on pourra déterminer et établir des tendances à partir des performances lors des combats afin d’identifier le pic de carrière.
 
    **- Interrogations :**
-   Quel combattant a le plus progressé au cours de sa carrière ?
-   Comment mesurer objectivement cette progression ?
-   Peut-on observer une évolution significative dans ses performances statistiques (frappes, takedowns, victoires...) ?
+   
+   Quel combattant a le plus progressé au cours de sa carrière ?<br>
+   Comment mesurer objectivement cette progression ?<br>
+   Peut-on observer une évolution significative dans ses performances statistiques (frappes, takedowns, victoires...) ?<br>
    Y a-t-il des combattants qui étaient médiocres au départ mais sont devenus très performants ?
 
    **- Variables à comparer :**
+
    Variables temporelles/évolutives :
-   event_date : permet de suivre la chronologie des combats.
+   event_date : permet de suivre la chronologie des combats<br>
    fighter_name ou fighter1 / fighter2 : pour filtrer par combattant.
 
    Variables de performance :
-   outcome : a-t-il gagné ou perdu ?
-   method : le type de victoire (plus de KO ? plus de combats à la décision ?).
-   fighter1/2_sig_strikes_landed_pm : connaître le volume d’attaque debout
-   fighter1/2_sig_strikes_accuracy : obtenir la précision des coups
-   fighter1/2_sig_strikes_absorbed_pm : savoir si le combattant prend beaucoup de coups (facteur qui peut influer la longévité de carrière)
-   fighter1/2_sig_strikes_defended : défense des coups
-   fighter1/2_takedown_avg_per15m : le maintien au sol (domination ?)
-   fighter1/2_takedown_accuracy : précision des attaques au sol (bonnes performances ?)
-   fighter1/2_takedown_defence : savoir si le combattant peut contrer les attaques de son adversaire
+   outcome : a-t-il gagné ou perdu ?<br>
+   method : le type de victoire (plus de KO ? plus de combats à la décision ?)<br>
+   fighter1/2_sig_strikes_landed_pm : connaître le volume d’attaque debout<br>
+   fighter1/2_sig_strikes_accuracy : obtenir la précision des coups<br>
+   fighter1/2_sig_strikes_absorbed_pm : savoir si le combattant prend beaucoup de coups (facteur qui peut influer la longévité de carrière)<br>
+   fighter1/2_sig_strikes_defended : défense des coups<br>
+   fighter1/2_takedown_avg_per15m : le maintien au sol (domination ?)<br>
+   fighter1/2_takedown_accuracy : précision des attaques au sol (bonnes performances ?)<br>
+   fighter1/2_takedown_defence : savoir si le combattant peut contrer les attaques de son adversaire<br>
    fighter1/2_submission_avg_attempted_per15m : connaître le volume d’attaque au sol
 
    **- Visualisation :**
+   
    Pour répondre à cette question graphiquement, le plus judicieux est d’établir plusieurs graphiques :
    un bar chart pour montrer les meilleurs combattants et mettre en évidence celui qui a la meilleure progression globale
    un line chart pour visualiser l’évolution des performances du combattant ayant la meilleure progression
 
    **- Limites/problèmes :**
+   
    Il faut plusieurs combats pour évaluer une progression et cela souligne la possibilité de devoir ignorer les combattants avec peu de combats.
    Il est compliqué d’établir un seul combattant sur l’ensemble des catégories car il y a des catégories où il y a plus de concurrence et d’autres moins. En effet, atteindre le haut rang voire la ceinture d’une catégorie avec beaucoup de concurrences est donc plus difficile. Un combattant d’une catégorie plus accessible peut avoir une meilleure carrière mais n’est pas foncièrement un meilleur combattant. 
 
@@ -380,19 +406,23 @@ Les visualisations proposées permettent d’observer des tendances générales,
    L’objectif est de comprendre à quel point le style de combat peut être facteur de réussite.
 
    **- Interrogations :**
-   Un volume d’attaque élevé donne-t-il des garanties de résultat ?
-   Suffit-il d'être le meilleur défenseur pour remporter un combat ?
+   
+   Un volume d’attaque élevé donne-t-il des garanties de résultat ?<br>
+   Suffit-il d'être le meilleur défenseur pour remporter un combat ?<br>
    Quels types d’attaques doivent être effectués en priorité pour avoir le plus de chance de gagner le combat ?
 
    **- Variables à comparer :**
-   fighter1/2_sig_strikes_landed_pm, fighter1/2_sig_strikes_accuracy, fighter1/2_sig_strikes_absorbed_pm, fighter1/2_sig_strikes_defended, fighter1/2_takedown_avg_per15m, fighter1/2_takedown_accuracy, fighter1/2_takedown_defence, fighter1/2_submission_avg_attempted_per15m, outcome
+   
+   fighter1/2_sig_strikes_landed_pm<br> fighter1/2_sig_strikes_accuracy<br> fighter1/2_sig_strikes_absorbed_pm<br> fighter1/2_sig_strikes_defended<br> fighter1/2_takedown_avg_per15m<br>        fighter1/2_takedown_accuracy<br> fighter1/2_takedown_defence<br> fighter1/2_submission_avg_attempted_per15m<br> outcome
    
    **- Visualisation :**
+
    Un stacked bar chart permettant de visualiser l’efficacité des attaques pour chaque combattant (dont les champion qui serviront de base de comparaison)
    Pour éviter la surcharge d’informations on peut réaliser un stacked bar chart pour les attaques debout et un autre pour les attaques au sol
    Pour visualiser le volume d’attaques envoyées, on pourrait utiliser un scatterplot avec en abscisse le taux de victoires des combattants et en ordonnée le nombre de coups envoyés.
 
    **- Limites/problèmes :**
+
    Le principal problème de ces visualisations est qu’elles peuvent être faussées par les combats qui se sont terminés prématurément et les combattants n’ayant pas effectué beaucoup de combats.
 
    
