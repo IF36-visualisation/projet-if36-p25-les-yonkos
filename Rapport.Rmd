@@ -1,16 +1,29 @@
 ---
 title: "Analyse des Combats de MMA dans l'UFC"
-
 author: "IF36 - Les Yonkos"
-
 date: "UTT - P25"
-
 output:
-
-  html_document: default
-
-  pdf_document: default
+  word_document: default
+  html_document:
+    warning: false
+    message: false
+  pdf_document:
+    warning: false
+    message: false
+editor_options:
+  markdown:
+    wrap: sentence
 ---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = TRUE,
+  warning = FALSE,
+  message = FALSE,
+  fig.width = 10,
+  fig.height = 6
+)
+```
 
 ## Table des matières
 
@@ -20,7 +33,7 @@ output:
 
 # Introduction
 
-&ensp;Pour notre projet, on a bossé avec deux datasets sur les combats de MMA dans l'UFC. Le premier, **"Complete UFC Data"**, contient plein d'infos sur les événements, les combattants et leurs stats de combat, ainsi que les cotes des paris. Ce dataset couvre une période de **1994 à 2023**, ce qui nous donne pas mal de matière pour analyser les performances et les tendances dans le MMA.
+&ensp;Pour notre projet, on a travaillé avec deux datasets sur les combats de MMA dans l'UFC. Le premier, **"Complete UFC Data"**, contient des informations sur les événements, les combattants et leurs statistiques de combat, ainsi que les cotes des paris. Ce dataset couvre une période de **1994 à 2023**, ce qui nous donne beaucoup de matière pour analyser les performances et les tendances dans le MMA.
 
 &ensp;Le second dataset, **"Pro MMA Fighters"**, se focalise plutôt sur les combattants eux-mêmes, avec leurs caractéristiques personnelles, physiques et leur bilan de carrière. Par contre, les données ne sont à jour que jusqu'en **2022**, donc un peu limité pour les analyses récentes.
 
@@ -229,7 +242,7 @@ ggplot(data, aes(x = reach_diff_pct, y = strike_diff)) +
 
 **Interprétation :** Cette visualisation nous permet de nous rendre compte qu'une plus grande allonge ne se traduit pas forcément par un avantage en termes de coups portés. La ligne de régression indique la tendance générale (la pente) est très légèrement positive. L'allonge a donc un impact, mais il est plus léger que ce qu'on pourrait penser.
 
-#### Visualisation 3: Impact de l'allonge sur les tentatives de takedown
+#### Visualisation 4: Impact de l'allonge sur les tentatives de takedown
 
 Cette visualisation examine, de la même manière, la relation entre la différence d'allonge du fighter 1 face au fighter 2 (en pourcentage) et la différence de takedowns tentés par 15 minutes entre les combattants On pourrait penser qu'un combattant ayant une plus petite allonge que son adversaire va tenter de l'emmener au sol, afin de compenser le déséquilibre debout.
 
@@ -253,9 +266,11 @@ ggplot(data, aes(x = reach_diff_pct, y = takedown_diff)) +
 Ces visualisations nous permettent d'analyser sous différents angles l'impact de l'allonge sur les performances et les résultats des combats UFC. Nous pouvons désormais répondre à nos questions initiales:
 
 1.  **À quel point l'allonge peut être un avantage significatif pour gagner un combat?**
-    -   Les visualisations 1 et 4 offrent des perspectives claires sur cette question, en montrant la différence entre gagnants et perdants ainsi que les proportions de victoires par catégorie d'allonge. On se rend compte que plus la différence d'allonge est grande, plus elle a un impact sur la finalité du combat
+    -   Les visualisations 1 et 2 offrent des perspectives claires sur cette question, en montrant la différence entre gagnants et perdants ainsi que les proportions de victoires par catégorie d'allonge. On se rend compte que plus la différence d'allonge est grande, plus elle a un impact sur la finalité du combat
 2.  **Un combattant devrait-il accepter un combat face à un adversaire disposant d'une plus grande allonge?**
     -   La visualisation 1 est particulièrement utile pour répondre à cette question, car elle montre les proportions de victoires en fonction de l'écart d'allonge. Un combattant ne devrait ainsi pas accepter un combat lorsqu'il a une allonge plus de 20 centimètres plus petite que son adversaire, les chances de victoire étant grandement réduites.
+3.  **Avoir une grande allonge pousse-t-elle le combattant à utiliser son striking ou à tenter des takedowns?**
+    -   Les visualisations 3 et 4 explorent cette question en montrant comment l'allonge influence les stratégies de frappe et de projection. Elle n'est pas si significative pour les coups, mais on se rend compte qu'une plus petite allonge engendre un nombre de takedowns plus élevé.
 
 
 
