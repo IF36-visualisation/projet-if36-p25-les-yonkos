@@ -71,9 +71,9 @@ data <- read_csv("data/complete_ufc_data.csv", show_col_types = FALSE)
 
 ### Question 1 : Durant quel round la majorité des combats se terminent ?
 
-Nous supponsons que la majorité des rounds se terminent vers le milieu du combat : au 2ème ou 3ème round. Il y a aussi sûrement beaucoup de KO où le combat se finit vite.
+Nous supposons que la majorité des rounds se terminent vers le milieu du combat : au 2ème ou 3ème round. Il y a aussi sûrement beaucoup de KO où le combat se finit vite. 
 
-Commençons par nettoyer les données pour la question : enlever les NA et convertir la colonne 'round' en facteur
+Commençons par nettoyer les données pour la question : enlever les NA et convertir la colonne 'round' en facteur.
 
 ```{r data_cleaning}
 
@@ -105,23 +105,23 @@ ggplot(df_clean, aes(x = round)) +
   expand_limits(y = max(table(df_clean$round)) * 1.1)  # ajoute de l’espace au-dessus des barres
 ```
 
-**Interprétation :** Le graphique permet de répondre clairement à la question posée, le round 3 est celui où la majorité des combats se terminent.
+**Interprétation :** Le graphique permet de répondre clairement à la question posée, le round 3 est celui où la majorité des combats se terminent. Cela montre que les combats ne s'arrêtent pas forcément sur un KO ou une soumission précoce comme certains qui pourraient le penser. 
 
 
 ##### Conclusion question 1
 
-D’après le graphique, **le round 3 est celui où la majorité des combats se terminent**.  
+D’après le graphique, **le round 3 est le round de fin le plus fréquent**.  
 On observe également que plusieurs combats prennent fin lors des deux premiers rounds.
 
 Néanmoins, les rounds 4 et 5 s’avèrent être beaucoup plus rares, ce qui est logique puisqu’ils ne concernent généralement que les combats principaux (*main events* ou *title fights*).
-Tout de même, les combats semblent durer au moins un certain temps avant de se conclure, ce qui peut représenter des affrontements équilibrés, des stratégies de fatigue progressive ou des combats à l’usure.
+De même, les combats semblent durer au moins un certain temps avant de se conclure, ce qui peut représenter des affrontements équilibrés, des stratégies de fatigue progressive ou des combats à l’usure.
 
 
 
 ### Question 2 : L’allonge est-elle un avantage significatif pour gagner un combat ?
 
 Nous cherchons à déterminer si l'allonge représente un avantage significatif pour remporter un combat et comment cet avantage potentiel peut se manifester dans les stratégies employées par les combattants.
-Nous tenons l'hypothèse que l'allonge est un facteur très important et qu'elle impact la stratégie des combatttants. Voyons comment.
+Nous tenons l'hypothèse que l'allonge est un facteur très important et qu'elle impacte la stratégie des combatttants. 
 
 #### Visualisation 1: Proportion de victoires par catégorie de différence d'allonge
 
@@ -210,7 +210,7 @@ ggplot(reach_victory_counts, aes(x = reach_advantage, y = nombre_victoires, fill
 
 #### Visualisation 3: Impact de l'allonge sur les coups significatifs portés
 
-Ce graphique analyse la relation entre la différence d'allonge du fighter 1 face au fighter 2 (en pourcentage) et la différence de coups significatifs portés par minute entre les combattants. On pourrait penser que plus un combattant à une grande allonge, plus il l'utiliserait pour porter des coups à son adversaire.
+Ce graphique analyse la relation entre la différence d'allonge du fighter 1 face au fighter 2 (en pourcentage) et la différence de coups significatifs portés par minute entre les combattants. On pourrait penser que plus un combattant possède une grande allonge, plus il l'utiliserait pour porter des coups à son adversaire.
 
 ```{r scatterplot_strikes}
 # Calcul des différences relatives d'allonge et de striking
@@ -231,7 +231,7 @@ ggplot(data, aes(x = reach_diff_pct, y = strike_diff)) +
 
 #### Visualisation 3: Impact de l'allonge sur les tentatives de takedown
 
-Cette visualisation examine, de la même manière, la relation entre la différence d'allonge du fighter 1 face au fighter 2 (en pourcentage) et la différence de takedowns tentés par 15 minutes entre les combattants On pourrait penser qu'un combattant ayant une plus petite allonge que son adversaire va tenter de l'emmener au sol, afin de compenser le désiquilibre debout.
+Cette visualisation examine, de la même manière, la relation entre la différence d'allonge du fighter 1 face au fighter 2 (en pourcentage) et la différence de takedowns tentés par 15 minutes entre les combattants On pourrait penser qu'un combattant ayant une plus petite allonge que son adversaire va tenter de l'emmener au sol, afin de compenser le déséquilibre debout.
 
 ```{r scatterplot_takedowns}
 # Calcul de la différence de takedowns
@@ -247,7 +247,7 @@ ggplot(data, aes(x = reach_diff_pct, y = takedown_diff)) +
   theme_minimal()
 ```
 
-**Interprétation :** Ce graphique nous permet de voir déjà plus clairement la stratégie utilisée par les combattants concernant les takedowns. La pente est négative, elle indique donc que les combattants avec une allonge inférieure compensent en tentant plus de projections au sol. Notre hypothèse est ici vérifiée. 
+**Interprétation :** Ce graphique nous permet de voir déjà plus clairement la stratégie utilisée par les combattants concernant les takedowns. La pente est négative, elle indique donc que les combattants avec une allonge inférieure compensent en tentant plus de projections au sol. Notre hypothèse est donc vérifiée. 
 
 ##### Conclusion question 2
 Ces visualisations nous permettent d'analyser sous différents angles l'impact de l'allonge sur les performances et les résultats des combats UFC. Nous pouvons désormais répondre à nos questions initiales:
@@ -305,8 +305,8 @@ ggplot(stance_usage, aes(x = reorder(stance, -count), y = count, fill = stance))
 ```
 
 **Interprétation :** Ce graphique démontre que l'écrasante majorité des combats utilise une garde orthodox.
-Le seul argument qui pourrait nous empêcher de considérer la garde orthodox comme étant la meilleure garde à utiliser serait que la southpaw ou la switch possèdent un taux de victoires très élevé. 
-En revanche on peut d'ores et déjà éliminer les autres gardes de notres analyse car leur nombre d'utilisation est négligeable.
+Le seul argument qui pourrait nous empêcher de considérer la garde orthodox comme étant la meilleure garde à utiliser serait que la southpaw ou la switch possède un taux de victoires très élevé. 
+En revanche, on peut d'ores et déjà éliminer les autres gardes de notres analyse car leur nombre d'utilisation est négligeable.
 
 
 #### Visualisation 2 : Taux de victoire
@@ -336,7 +336,7 @@ ggplot(stance_summary, aes(x = stance, y = percent, fill = result)) +
   theme_minimal()
 ```
 
-**Interprétation :** Ici on peut voir qu'aucune des gardes ne garantie un taux de victoire significativement supérieur à 50%.
+**Interprétation :** Ici, on peut voir qu'aucune des gardes ne garantit un taux de victoire significativement supérieur à 50%.
 
 #### Visualisation 3 : Taux de victoire entre les gardes
 
@@ -394,12 +394,12 @@ ggplot(wins_plot, aes(x = fighter2_stance, y = fighter1_stance, fill = victory_r
   theme_minimal()
 ```
 
-**Interpretation :** Aucune domination significatif ne peut être notée. Il semble que la garde n'est pas l'élément qui influence le plus l'issue d'un combat.
+**Interpretation :** Aucune domination significative ne peut être notée. Il semble que la garde n'est pas l'élément qui influence le plus l'issue d'un combat.
 
 ##### Conclusion question 3
-Finalement on pourrait considérer la garde orhtodox comme étant la meilleure garde à utiliser. 
-Bien qu'elle possède le même taux de réussite que les autres gardes, elle est tout de même beaucoup plus utiliser ce qui veut dire que numériquement, elle a permis a plus de combattants de remporter leur combats.
-Une analyse plus poussée serait d'étudier les gardes utilisées selon le niveau des combattants.
+Finalement, on pourrait considérer la garde orhtodox comme étant la meilleure garde à utiliser. 
+Bien qu'elle possède le même taux de réussite que les autres gardes, elle est tout de même beaucoup plus utilisée. Cela veut donc dire que numériquement elle permet à un nombre important de combattants de remporter leur combat.
+Une analyse plus profonde serait d'étudier les gardes utilisées selon le niveau des combattants.
 
 
 
@@ -461,7 +461,7 @@ En effet, le fait que les underdogs gagnent dans plus d'un tiers des cas soulèv
 #### Visualisation 2 : Relation entre côtes et durée du combat
 
 Nous cherchons à quantifier cette tendance. Nous avons déja tracé précédemment la durée moyenne des combats (qui était de 3 rounds), y a t-il une différence majeure si l'on prend en considération les côtes ?
-Ici, on s'attend à ce que les combats soit plus long si les côtes sont hautes (adversaires égaux). 
+Ici, on s'attendrait à ce que les combats soient plus longs si les côtes étaient hautes (adversaires égaux). 
 
 ```{r favourite_rounds}
 # Scatterplot cotes vs round pour les favoris gagnants
@@ -499,7 +499,7 @@ ggplot(odds_df %>% filter(betting_outcome == "underdog", favourite_odds <= 2),
 
 **Interprétation :** On a ici tracé la durée des combats en fonction des cotes du favori lorsque le favori gagne (graphique 1) ou lorsque l'underdog gagne (graphique 2). 
 Les lignes de tendance ne montre pas une grande évolution (surtout en considérent l'intervalle de confiance), mais il est tout de même possible d'en tirer des potentielles conclusions intéressantes :  
-- Sur le premier graphique, on voit que plus les cotes augmentent, plus la durée du combat semble augmenter. Ça confirme notre hypothèse de départ : si la différence de niveau est moins grande, les combats durent plus longtemps (de peu).  
+- Sur le premier graphique, on voit que plus les cotes augmentent, plus la durée du combat semble augmenter. Cela confirme notre hypothèse de départ : si la différence de niveau est moins grande, les combats durent plus longtemps (de peu).  
 - Sur le deuxième graphique, on observe les rounds où l'underdog a gagné selon les cotes du favori. Ici, la tendance est la même que sur le premier graphique (voir plus marqué vers la croissance), ce qui est assez surprenant. Ainsi, si la différence de niveau est grande, l'underdog a plus de chances de gagner avec un combat rapide. Cela est sûrement dû à l'effet de surprise et au fait de ne pas laisser le favori imposer son rythme.  
 
 #### Visualisation 3 : Précision des cotes
