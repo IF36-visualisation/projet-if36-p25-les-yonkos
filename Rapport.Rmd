@@ -565,3 +565,185 @@ Les combat où le favori a une cote de plus de 2 ont un taux de victoire supéri
 
 ##### Conclusion question 4
 Les favoris remportent environ **65% des combats**, ce qui confirme que les bookmakers ont globalement raison dans leurs prédictions. Cependant, les underdogs gagnent dans plus d’un tiers des cas, ce qui montre que le MMA reste un sport imprévisible. De plus, les cotes reflètent bien les probabilités de victoire, avec une corrélation claire entre des cotes plus basses et un taux de victoire plus élevé.
+
+
+
+### Question 7 : Quel combattant a montré la progression la plus spectaculaire dans ses performances ?
+
+Nous supposons que le combattant le plus spectaculaire est sûrement celui qui a le plus de victoires.
+
+Tout d'abord, nous allons commencer par mettre en place les statistiques de combats (victoires/défaites/no contests). 
+
+```{r data_combat}
+library(tidyverse)
+library(ggplot2)
+library(lubridate)
+
+# 1. Statistiques de base : victoires, défaites, no contests
+
+# Victoires
+df_wins <- df %>%
+  filter(outcome %in% c("fighter1", "fighter2")) %>%
+  mutate(winner = if_else(outcome == "fighter1", fighter1, fighter2)) %>%
+  count(winner, name = "wins") %>%
+  rename(fighter = winner)
+
+# Défaites
+df_losses <- df %>%
+  filter(outcome %in% c("fighter1", "fighter2")) %>%
+  mutate(loser = if_else(outcome == "fighter1", fighter2, fighter1)) %>%
+  count(loser, name = "losses") %>%
+  rename(fighter = loser)
+
+# No contest
+df_nc <- df %>%
+  filter(outcome == "No contest") %>%
+  select(fighter1, fighter2) %>%
+  pivot_longer(cols = everything(), values_to = "fighter") %>%
+  count(fighter, name = "no_contests")
+
+# Fusion des résultats
+results_full <- full_join(df_wins, df_losses, by = "fighter") %>%
+  full_join(df_nc, by = "fighter") %>%
+  mutate(
+    wins = replace_na(wins, 0),
+    losses = replace_na(losses, 0),
+    no_contests = replace_na(no_contests, 0),
+    total_fights = wins + losses + no_contests
+  )
+```
+
+#### Visualisation 1 : les 10 combattants avec le plus de victoires
+
+Ce premier graphique permet de montrer l'aspect qui semble le plus logique : le facteur victoires.
+
+```{r barchart_combattant_victoires}
+# 2. Graphique : Top 10 des combattants avec le plus de victoires
+top_fighters <- results_full %>%
+  slice_max(wins, n = 10)
+
+ggplot(top_fighters, aes(x = reorder(fighter, wins), y = wins, fill = fighter)) +
+  geom_bar(stat = "identity", show.legend = FALSE) +
+  coord_flip() +
+  labs(
+    title = "Top 10 des combattants avec le plus de victoires",
+    x = "Combattant",
+    y = "Nombre de victoires",
+    caption = "Source : Données UFC"
+  ) +
+  theme_minimal() +
+  scale_fill_brewer(palette = "Set3")
+```
+
+**Interprétation :** 
+Ce graphique met en évidence les dix combattants ayant remporté le plus grand nombre de victoires à l’UFC. Jim Miller arrive en tête avec 25 victoires, suivi de près par Donald Cerrone et Andrei Arlovski. On observe également la présence de figures notables comme Demian Maia, Charles Oliveira et Jon Jones. Ce classement reflète non seulement la performance et la régularité de ces combattants, mais aussi leur capacité à maintenir un haut niveau de compétitivité sur le long terme. Il s’agit ici d’un indicateur clé de succès individuel dans l’octogone.
+On voit donc que Jim Miller est le combattant le plus victorieux mais est-ce qu'il est vraiment le combattant ayant la progression la plus spectaculaire. Le graphique répond partiellement à la question car il faudrait vérifier si le combattant avec le plus de victoires n'a pas plus de défaites par rapport aux autres. En effet, on pourrait avoir un combattant avec le plus de victoires mais qui n'a pas forcément le meilleur ratio victoires/défaites.
+
+
+#### Visualisation 2 : classement des 10 combattants par nombre total de combats
+
+Cette deuxième visualisation permet de vérifier ou non l'hypothèse précédente en visualisant les 10 combattants avec le meilleur ratio victoires/défaites. 
+
+```{r barchart_combattant}
+# 3. Graphique : Top 10 par nombre total de combats
+top10_by_total <- results_full %>%
+  filter(total_fights >= 5) %>%
+  slice_max(total_fights, n = 10)
+
+plot_data <- top10_by_total %>%
+  pivot_longer(cols = c(wins, losses, no_contests), names_to = "result_type", values_to = "count") %>%
+  mutate(result_type = factor(result_type, levels = c("wins", "losses", "no_contests")))
+
+ggplot(plot_data, aes(x = fct_reorder(fighter, total_fights), y = count, fill = result_type)) +
+  geom_bar(stat = "identity") +
+  coord_flip() +
+  scale_fill_manual(
+    values = c("wins" = "darkgreen", "losses" = "firebrick", "no_contests" = "grey50"),
+    labels = c("Victoires", "Défaites", "No Contest")
+  ) +
+  labs(
+    title = "Top 10 des combattants par nombre total de combats",
+    subtitle = "Victoire / Défaite / No Contest",
+    x = "Combattant",
+    y = "Nombre de combats",
+    fill = "Résultat",
+    caption = "Source : Données UFC"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text = element_text(size = 10),
+    plot.title = element_text(size = 14, face = "bold"),
+    legend.position = "bottom"
+  )
+```
+
+**Interprétation :** 
+Ce graphique montre les combattants les plus expérimentés de l’UFC en termes de nombre total de combats, en distinguant les victoires (vert), les défaites (rouge) et les "No Contest" (gris). Jim Miller domine à nouveau, soulignant à la fois sa longévité et sa constance. Andrei Arlovski et Donald Cerrone figurent également en haut du classement. Ce graphique révèle non seulement l’endurance physique et mentale de ces athlètes sur le long terme, mais aussi leur rôle en tant que piliers de l'organisation. Certains combattants affichent un équilibre entre victoires et défaites, tandis que d’autres se distinguent par leur réussite ou leur persévérance malgré les revers.
+On voit que le combattant avec le meilleur ratio correspond bien à celui qui a eu le plus de victoires dans sa carrière. Jim Miller est donc le combattant avec la carrière la plus spectaculaire.
+C'est celui qui a le plus de victoires et le plus de combats à son actif. C'est donc le plus légitime à avoir le statut du combattant le plus spectaculaire.
+
+#### Visualisation 3 : évolution des performances de Jim Miller
+
+Ce graphique permet de voir l'évolution des performances du meilleur combattant durant le temps et vérifier la légitimité du caractère spectaculaire.
+
+```{r linechart_jim_miller}
+# 4. Évolution des performances de Jim Miller
+
+jim_miller_fights <- df %>%
+  filter(fighter1 == "Jim Miller" | fighter2 == "Jim Miller") %>%
+  mutate(
+    event_date = as.Date(event_date),
+    is_fighter1 = fighter1 == "Jim Miller",
+    sig_strikes_accuracy = if_else(is_fighter1, fighter1_sig_strikes_accuracy, fighter2_sig_strikes_accuracy),
+    takedown_avg_per15m = if_else(is_fighter1, fighter1_takedown_avg_per15m, fighter2_takedown_avg_per15m),
+    sig_strikes_defended = if_else(is_fighter1, fighter1_sig_strikes_defended, fighter2_sig_strikes_defended),
+    jim_outcome = case_when(
+      (outcome == "fighter1" & is_fighter1) | (outcome == "fighter2" & !is_fighter1) ~ 1,
+      outcome %in% c("fighter1", "fighter2") ~ 0,
+      TRUE ~ NA_real_
+    )
+  ) %>%
+  arrange(event_date)
+
+jim_miller_long <- jim_miller_fights %>%
+  select(event_date, jim_outcome, sig_strikes_accuracy, takedown_avg_per15m, sig_strikes_defended) %>%
+  pivot_longer(cols = -event_date, names_to = "metric", values_to = "value") %>%
+  filter(!is.na(value))
+
+ggplot(jim_miller_long, aes(x = event_date, y = value, color = metric)) +
+  geom_step(size = 1) +
+  geom_point(size = 2) +
+  scale_color_manual(
+    values = c(
+      jim_outcome = "darkgreen",
+      sig_strikes_accuracy = "blue",
+      takedown_avg_per15m = "purple",
+      sig_strikes_defended = "orange"
+    ),
+    labels = c(
+      jim_outcome = "Victoire (1 = oui, 0 = non)",
+      sig_strikes_accuracy = "Précision des frappes (%)",
+      takedown_avg_per15m = "Takedowns moyens / 15min",
+      sig_strikes_defended = "Défense des frappes (%)"
+    )
+  ) +
+  labs(
+    title = "Évolution des performances de Jim Miller au fil de sa carrière",
+    subtitle = "Divers indicateurs clés par date de combat",
+    x = "Date du combat",
+    y = "Valeur",
+    color = "Indicateur"
+  ) +
+  theme_minimal() +
+  theme(
+    legend.position = "bottom",
+    axis.text.x = element_text(angle = 45, hjust = 1)
+  )
+```
+
+**Interprétation :** 
+Le graphique présente l’évolution des performances de Jim Miller au fil de sa carrière à l’UFC, à travers plusieurs indicateurs clés. On observe une alternance régulière de victoires et de défaites, témoignant d’une carrière marquée par une certaine irrégularité sur le plan des résultats.
+Cependant, ses statistiques techniques (précision des frappes, défense des frappes et takedowns moyens) restent globalement stables dans le temps, ce qui s’explique probablement par le fait que le dataset utilise des moyennes sur l’ensemble de sa carrière plutôt que des données combat par combat. Cela rend difficile l’analyse de sa progression réelle au fil du temps, mais on peut tout de même constater une régularité dans ses performances, ce qui reflète sa longévité et sa constance dans l’UFC. Sa précision de frappe tourne autour de 40 %, sa défense avoisine les 60 %, et il maintient une moyenne élevée de 1,6 takedown réussi toutes les 15 minutes. Cela traduit un style de combat bien établi, orienté vers le grappling, ainsi qu’une constance technique malgré les aléas des combats.
+
+##### Conclusion question 7
+D'après nos 3 graphiques, on confirme que Jim Miller est le combattant ayant montré la progression la plus spectaculaire dans ses performances à l’UFC. Il occupe simultanément la première place en nombre total de combats, en nombre de victoires, et affiche une évolution marquée dans ses résultats. Sa longévité dans l’octogone, combinée à une constance et une amélioration notable de ses performances au fil du temps, témoignent d'une trajectoire ascendante remarquable. Contrairement à d'autres combattants dont la carrière a pu être marquée par des hauts et des bas, Jim Miller a su maintenir un haut niveau de compétitivité tout en accumulant les victoires, ce qui reflète une progression solide et durable dans le monde professionnel.
