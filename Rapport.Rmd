@@ -3,10 +3,10 @@ title: "Analyse des Combats de MMA dans l'UFC"
 author: "IF36 - Les Yonkos"
 date: "UTT - P25"
 output:
-  word_document: default
   html_document:
     warning: false
     message: false
+  word_document: default
   pdf_document:
     warning: false
     message: false
@@ -567,6 +567,271 @@ Les combat où le favori a une cote de plus de 2 ont un taux de victoire supéri
 Les favoris remportent environ **65% des combats**, ce qui confirme que les bookmakers ont globalement raison dans leurs prédictions. Cependant, les underdogs gagnent dans plus d’un tiers des cas, ce qui montre que le MMA reste un sport imprévisible. De plus, les cotes reflètent bien les probabilités de victoire, avec une corrélation claire entre des cotes plus basses et un taux de victoire plus élevé.
 
 
+### Question 5 : Existe-t-il des profils de combattant différents selon les régions du monde ?
+
+Le MMA puise ses techniques dans diverses disciplines traditionnelles propres à différentes cultures. Il est donc logique de se demander si les combattants de différentes régions du monde développent des profils de combat distincts, reflétant les traditions martiales de leur origine géographique.
+
+Nous nous attendons à observer des spécialisations régionales : par exemple, les combattants russes pourraient exceller dans les projections (influence de la lutte et du sambo), tandis que d'autres régions pourraient privilégier le striking.
+
+#### Visualisation 1 : Distribution des tentatives de projection et défense contre les projections
+
+Commençons par examiner trois variables clés qui illustrent l'approche tactique des combattants : les tentatives de projection, la défense contre les projections, et les frappes significatives touchées par région.
+
+```{r preparation_donnees_q5}
+fighters <- read_csv("data/pro_mma_fighters.csv")
+# Standardiser les noms
+fighters <- fighters %>% 
+  mutate(fighter_name = str_to_lower(fighter_name))
+
+ufc <- data %>% 
+  mutate(fighter1 = str_to_lower(fighter1), 
+         fighter2 = str_to_lower(fighter2))
+
+fighters_unique <- fighters %>% 
+  distinct(fighter_name, .keep_all = TRUE)
+
+ufc_geo <- ufc %>% 
+  left_join(fighters_unique %>% select(fighter_name, country), 
+            by = c("fighter1" = "fighter_name")) %>%
+  rename(fighter1_country = country) %>%
+  left_join(fighters_unique %>% select(fighter_name, country), 
+            by = c("fighter2" = "fighter_name")) %>%
+  rename(fighter2_country = country)
+
+# Regroupement par région
+get_region <- function(country) {
+  if (country %in% c("Russia")) return("Russie")
+  else if (country %in% c("Brazil", "Argentina", "Peru", "Chile", "Colombia")) return("Amérique du Sud")
+  else if (country %in% c("USA", "Canada", "Mexico")) return("Amérique du Nord")
+  else if (country %in% c("UK", "France", "Germany", "Spain", "Poland", "Sweden", "Netherlands", "Italy")) return("Europe")
+  else if (country %in% c("Japan", "China", "South Korea", "India", "Thailand", "Philippines")) return("Asie (hors Russie)")
+  else return(NA)
+}
+
+ufc_geo <- ufc_geo %>%
+  mutate(fighter1_region = sapply(fighter1_country, get_region),
+         fighter2_region = sapply(fighter2_country, get_region))
+
+# Préparation des données pour l'analyse
+fighter1_stats <- ufc_geo %>%
+  select(starts_with("fighter1_")) %>%
+  rename_with(~ str_replace(., "fighter1_", ""), everything()) %>%
+  mutate(fighter = "fighter1")
+
+fighter2_stats <- ufc_geo %>%
+  select(starts_with("fighter2_")) %>%
+  rename_with(~ str_replace(., "fighter2_", ""), everything()) %>%
+  mutate(fighter = "fighter2")
+
+all_stats <- bind_rows(fighter1_stats, fighter2_stats) %>%
+  filter(!is.na(region))
+
+# Variables d'analyse avec noms français
+variables <- c(
+  "sig_strikes_landed_pm", 
+  "sig_strikes_accuracy", 
+  "takedown_avg_per15m",
+  "sig_strikes_absorbed_pm", 
+  "sig_strikes_defended", 
+  "takedown_defence"
+)
+
+# Noms français pour les variables
+var_names_fr <- c(
+  "sig_strikes_landed_pm" = "Frappes signif. touchées/min",
+  "sig_strikes_accuracy" = "Précision frappes signif. (%)",
+  "takedown_avg_per15m" = "Tentatives de projection/15min",
+  "sig_strikes_absorbed_pm" = "Frappes signif. subies/min",
+  "sig_strikes_defended" = "Défense frappes signif. (%)",
+  "takedown_defence" = "Défense projections (%)"
+)
+
+# Palette de couleurs pour les régions
+regions <- unique(all_stats$region[!is.na(all_stats$region)])
+colors <- RColorBrewer::brewer.pal(min(length(regions), 8), "Set2")
+region_colors <- setNames(colors[1:length(regions)], regions)
+```
+
+
+```{r projection_analysis}
+# Box plots pour les tentatives de projection
+p1 <- ggplot(all_stats, aes(x = region, y = takedown_avg_per15m, fill = region)) +
+  geom_boxplot(color = "black", alpha = 0.7) +
+  scale_fill_manual(values = region_colors, name = "Région") +
+  theme_minimal() +
+  labs(
+    title = "Distribution des tentatives de projection par région",
+    x = "Région",
+    y = "Tentatives de projection/15min"
+  ) +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1, size = 10),
+    plot.title = element_text(size = 12, face = "bold"),
+    legend.position = "none"
+  )
+
+# Box plots pour la défense contre les projections
+p2 <- ggplot(all_stats, aes(x = region, y = takedown_defence, fill = region)) +
+  geom_boxplot(color = "black", alpha = 0.7) +
+  scale_fill_manual(values = region_colors, name = "Région") +
+  theme_minimal() +
+  labs(
+    title = "Distribution de la défense contre les projections par région",
+    x = "Région",
+    y = "Défense projections (%)"
+  ) +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1, size = 10),
+    plot.title = element_text(size = 12, face = "bold"),
+    legend.position = "none"
+  )
+
+# Box plots pour la défense contre les projections
+p3 <- ggplot(all_stats, aes(x = region, y = sig_strikes_landed_pm, fill = region)) +
+  geom_boxplot(color = "black", alpha = 0.7) +
+  scale_fill_manual(values = region_colors, name = "Région") +
+  theme_minimal() +
+  labs(
+    title = "Distribution des frappes significatives touchées par région",
+    x = "Région",
+    y = "Frappes signif. touchées/min"
+  ) +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1, size = 10),
+    plot.title = element_text(size = 12, face = "bold"),
+    legend.position = "none"
+  )
+
+print(p1)
+print(p2)
+print(p3)
+```
+
+**Interprétation :** Les 2 premiers box plots révèlent des différences tactiques marquées selon les régions. La Russie se distingue nettement avec des valeurs supérieures tant pour les tentatives de projection que pour leur défense, confirmant notre hypothèse sur l'influence des traditions de lutte et de sambo dans le style russe. Cette spécialisation dans le grappling contraste avec les autres régions qui présentent des profils plus homogènes entre elles. Ces résultats confirment l'existence de spécialisations régionales distinctes, la Russie étant clairement orientée grappling tandis que les autres régions développent des styles plus équilibrés. Le dernier box plot concerne le striking, et les valeurs semblent bien plus équilibrées selon la région, on ne peut pas assurément observer une tendance. Seule l'Asie hors Russie est en retrait (on y retouve surtout des pays d'extreme orient.) 
+
+#### Visualisation 2 : Profils radar par région
+
+Pour avoir une vision d'ensemble des différents profils de combattants, utilisons des graphiques radar qui permettent de comparer simultanément toutes les variables techniques.On pourra ainsi définir le profil type d'un combattant en fonction de sa région.
+
+```{r radar_charts_by_region}
+
+library(fmsb)
+# Calcul des moyennes par région
+region_means <- all_stats %>%
+  group_by(region) %>%
+  summarise(across(all_of(variables), ~ mean(.x, na.rm = TRUE))) %>%
+  na.omit()
+
+# Créer une version avec numéros pour l'affichage
+region_means_numbered <- region_means
+colnames(region_means_numbered)[2:ncol(region_means_numbered)] <- paste0("V", 1:length(variables))
+
+# Variables pour le radar chart (avec numéros)
+radar_vars_numbered <- paste0("V", 1:length(variables))
+
+# Créer la légende des variables
+legend_text <- paste0(1:length(variables), ". ", var_names_fr[variables])
+
+# Graphique radar combiné pour toutes les régions
+max_min <- rbind(
+  apply(region_means_numbered[radar_vars_numbered], 2, max),
+  apply(region_means_numbered[radar_vars_numbered], 2, min)
+)
+
+# Configuration des graphiques
+par(mfrow = c(2,3))
+par(mar = c(1, 1, 3, 1))
+
+# Un graphique par région
+for (i in 1:nrow(region_means_numbered)) {
+  region_name <- region_means_numbered$region[i]
+  data_row <- region_means_numbered[i, radar_vars_numbered]
+  
+  # Ajouter les lignes max et min pour normaliser le radar chart
+  chart_data <- rbind(max_min, data_row)
+  rownames(chart_data) <- c("Max", "Min", region_name)
+  
+  radarchart(
+    chart_data,
+    axistype = 1,
+    pcol = region_colors[region_name],
+    pfcol = scales::alpha(region_colors[region_name], 0.4),
+    plwd = 3,
+    title = paste("Profil des combattants –", region_name),
+    cglcol = "grey",
+    cglty = 1,
+    cglwd = 0.8,
+    axislabcol = "grey",
+    vlcex = 1.5,
+    calcex = 0.9,
+    cex.main = 1.3
+  )
+}
+
+# Créer un graphique vide pour la légende
+plot(1, type = "n", axes = FALSE, xlab = "", ylab = "", main = "Légende des variables")
+
+# Ajouter la légende
+legend("center", 
+       legend = legend_text,
+       bty = "n",
+       cex = 1.2,
+       col = "black")
+```
+
+**Interprétation :** Les graphiques radar, présentés en pourcentages relatifs par rapport à la meilleure région pour chaque variable, révèlent des profils de combat distincts. La Russie confirme sa spécialisation grappling avec des valeurs maximales en tentatives de projection (V3) et défense projections (V6), formant un radar caractéristique étendu sur ces axes, mais aussi en striking, ce qui en fait la région la plus complète. L'Amérique du Nord présente un profil plus équilibré avec des forces particulières en frappes significatives touchées (V1), suggérant une approche plus orientée striking, mais des valeurs faibles en terme de projections. L'Amérique du Sud montre un profil equilibré avec des valeurs moyennes partout, mais ce sont ceux avec l'Amérique du Nord qui subissent le plus de coups. L'Europe affiche un profil orienté striking et offensif, avec les valeurs maximales en frappes touchées et en précision. Enfin, l'Asie affiche un profil plus faible, sans réelle force.
+
+#### Visualisation 3 : Analyse comparative des styles offensifs vs défensifs
+
+Enfin, pour approfondir l'analyse, examinons la relation entre les capacités offensives et défensives de chaque région sur un scatter plot. On pourra mettre en lien toutes les variables offensives et défensives selon la région pour avoir une vue globale de chaque région par rapport aux autres.
+
+```{r offensive_defensive_comparison}
+# Calculer les moyennes par région pour analyse offensive/défensive
+region_summary <- all_stats %>%
+  group_by(region) %>%
+  summarise(
+    offensive_striking = mean(sig_strikes_landed_pm, na.rm = TRUE),
+    defensive_striking = mean(sig_strikes_defended, na.rm = TRUE),
+    offensive_grappling = mean(takedown_avg_per15m, na.rm = TRUE),
+    defensive_grappling = mean(takedown_defence, na.rm = TRUE),
+    .groups = 'drop'
+  )
+
+# Déterminer les marges dynamiques
+x_margin <- (max(region_summary$offensive_striking) - min(region_summary$offensive_striking)) * 0.1
+y_margin <- (max(region_summary$defensive_striking) - min(region_summary$defensive_striking)) * 0.1
+
+# Graphique scatter offensif vs défensif
+ggplot(region_summary, aes(x = offensive_striking, y = defensive_striking)) +
+  geom_point(aes(color = region, size = offensive_grappling), alpha = 0.8) +
+  geom_text(aes(label = region), vjust = -1.5, size = 3) +
+  scale_color_manual(values = region_colors, name = "Région") +
+  scale_size_continuous(name = "Projections/15min", range = c(3, 8)) +
+  labs(
+    title = "Profils offensifs vs défensifs par région",
+    subtitle = "La taille des points représente les tentatives de projection",
+    x = "Frappes significatives touchées/min (Offensif)",
+    y = "Défense frappes significatives % (Défensif)"
+  ) +
+  coord_cartesian(
+    xlim = c(min(region_summary$offensive_striking) - x_margin,
+             max(region_summary$offensive_striking) + x_margin),
+    ylim = c(min(region_summary$defensive_striking) - y_margin,
+             max(region_summary$defensive_striking) + y_margin)
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(
+    plot.title = element_text(face = "bold", size = 14),
+    legend.position = "bottom"
+  )
+
+```
+
+**Interprétation :** Ainsi, cette visualisation confirme bien nos hypothèses traitées durant la question. La Russie est une région bien plus forte que ce soit offensivement ou défensivement, en terme de projection ou de striking. L'Europe a un profil particulièrement offensif, en étant en avance sur les frappes significatives touchées. Enfin, l'Asie est bien en retrait, confirmant ce qu'on a pu voir sur les radar charts.
+
+##### Conclusion question 5
+
+L’analyse révèle des différences marquées dans les profils de combattants selon les régions du monde, confirmant l’hypothèse de spécialisations régionales influencées par les traditions martiales locales. La Russie se distingue nettement par un style orienté grappling, avec une fréquence élevée de tentatives de projection et une solide défense au sol, reflet de l’influence du sambo et de la lutte. L’Europe se montre plus offensive dans le striking, avec une précision et une intensité de frappes significatives particulièrement élevées. L’Amérique du Nord adopte un profil équilibré, performant en striking mais moins actif au sol, tandis que l’Amérique du Sud présente un style intermédiaire tout en étant vulnérable défensivement. Enfin, l’Asie (hors Russie) apparaît globalement en retrait, sans domaine de prédilection affirmé. Ces résultats illustrent l’impact des écoles de formation régionales et des disciplines de combat traditionnelles sur les styles modernes en MMA.
 
 ### Question 7 : Quel combattant a montré la progression la plus spectaculaire dans ses performances ?
 
@@ -582,21 +847,21 @@ library(lubridate)
 # 1. Statistiques de base : victoires, défaites, no contests
 
 # Victoires
-df_wins <- df %>%
+df_wins <- data %>%
   filter(outcome %in% c("fighter1", "fighter2")) %>%
   mutate(winner = if_else(outcome == "fighter1", fighter1, fighter2)) %>%
   count(winner, name = "wins") %>%
   rename(fighter = winner)
 
 # Défaites
-df_losses <- df %>%
+df_losses <- data %>%
   filter(outcome %in% c("fighter1", "fighter2")) %>%
   mutate(loser = if_else(outcome == "fighter1", fighter2, fighter1)) %>%
   count(loser, name = "losses") %>%
   rename(fighter = loser)
 
 # No contest
-df_nc <- df %>%
+df_nc <- data %>%
   filter(outcome == "No contest") %>%
   select(fighter1, fighter2) %>%
   pivot_longer(cols = everything(), values_to = "fighter") %>%
@@ -689,7 +954,7 @@ Ce graphique permet de voir l'évolution des performances du meilleur combattant
 ```{r linechart_jim_miller}
 # 4. Évolution des performances de Jim Miller
 
-jim_miller_fights <- df %>%
+jim_miller_fights <- data %>%
   filter(fighter1 == "Jim Miller" | fighter2 == "Jim Miller") %>%
   mutate(
     event_date = as.Date(event_date),
