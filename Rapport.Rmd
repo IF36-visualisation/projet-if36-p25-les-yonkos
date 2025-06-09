@@ -483,7 +483,7 @@ Ici, on s'attendrait à ce que les combats soient plus longs si les côtes étai
 ggplot(odds_df %>% filter(betting_outcome == "favourite", favourite_odds <= 2), 
   aes(x = favourite_odds, y = round)) +
   geom_jitter(width = 0.1, height = 0.1, alpha = 0.5, color = "#1f77b4") +
-  geom_smooth(method = "lm", se = TRUE, color = "#1f77b4") +
+  geom_smooth(method = "lm", se = FALSE, color = "#1f77b4") +
   labs(
     title = "Cote du favori vs round de fin (Favoris gagnants)",
     x = "Cote du favori",
@@ -500,7 +500,7 @@ ggplot(odds_df %>% filter(betting_outcome == "favourite", favourite_odds <= 2),
 ggplot(odds_df %>% filter(betting_outcome == "underdog", favourite_odds <= 2), 
   aes(x = favourite_odds, y = round)) +
   geom_jitter(width = 0.1, height = 0.1, alpha = 0.5, color = "#ff7f0e") +
-  geom_smooth(method = "lm", se = TRUE, color = "#ff7f0e") +
+  geom_smooth(method = "lm", se = FALSE, color = "#ff7f0e") +
   labs(
     title = "Cote du favori vs round de fin (Underdogs gagnants)",
     x = "Cote du favori",
@@ -832,6 +832,421 @@ ggplot(region_summary, aes(x = offensive_striking, y = defensive_striking)) +
 ##### Conclusion question 5
 
 L’analyse révèle des différences marquées dans les profils de combattants selon les régions du monde, confirmant l’hypothèse de spécialisations régionales influencées par les traditions martiales locales. La Russie se distingue nettement par un style orienté grappling, avec une fréquence élevée de tentatives de projection et une solide défense au sol, reflet de l’influence du sambo et de la lutte. L’Europe se montre plus offensive dans le striking, avec une précision et une intensité de frappes significatives particulièrement élevées. L’Amérique du Nord adopte un profil équilibré, performant en striking mais moins actif au sol, tandis que l’Amérique du Sud présente un style intermédiaire tout en étant vulnérable défensivement. Enfin, l’Asie (hors Russie) apparaît globalement en retrait, sans domaine de prédilection affirmé. Ces résultats illustrent l’impact des écoles de formation régionales et des disciplines de combat traditionnelles sur les styles modernes en MMA.
+
+### Question 6 : Quels facteurs peuvent influencer considérablement la durée de carrière d’un combattant ?
+
+Cette question vise à identifier les variables ayant un impact significatif sur la longévité des combattants dans l'UFC. Nous analysons différents aspects physiques, tactiques et performatifs pour comprendre ce qui détermine une carrière durable.
+
+Commençons par pré-traité nos données pour avoir la durée de carrière de chaque combattant. Nous faisons le lien entre les deux datasets pour et gardons seulement les combattants dont on a la date de naissance. 
+
+```{r q6_pretraitement}
+library(dplyr)
+library(lubridate)
+library(ggplot2)
+library(corrplot)
+
+fighters_pro <- read.csv("data/pro_mma_fighters.csv")
+ufc_data <- read.csv("data/complete_ufc_data.csv")
+
+
+# convertir les colonnes de dates
+fighters_pro$birth_date <- dmy(fighters_pro$birth_date, quiet = TRUE)
+ufc_data$event_date <- ymd(ufc_data$event_date, quiet = TRUE)
+ufc_data$fighter1_dob <- ymd(ufc_data$fighter1_dob, quiet = TRUE)
+ufc_data$fighter2_dob <- ymd(ufc_data$fighter2_dob, quiet = TRUE)
+
+# créer une table longue pour les combattants et leurs combats à partir de ufc_data
+fights_fighter1 <- ufc_data %>%
+  select(event_date, fighter = fighter1, opponent = fighter2, weight_class, method, outcome,
+         sig_strikes_landed_pm = fighter1_sig_strikes_landed_pm,
+         sig_strikes_absorbed_pm = fighter1_sig_strikes_absorbed_pm,
+         height = fighter1_height, dob = fighter1_dob, rounds = round) %>% 
+  mutate(
+    win = ifelse(outcome == "fighter1", 1, 0),
+    loss = ifelse(outcome == "fighter2", 1, 0),
+    draw = ifelse(outcome == "Draw", 1, 0),
+    no_contest = ifelse(outcome == "No contest", 1, 0),
+    ko_suffered = ifelse(outcome == "fighter2" & grepl("KO/TKO", method, ignore.case = TRUE), 1, 0)
+  )
+
+fights_fighter2 <- ufc_data %>%
+  select(event_date, fighter = fighter2, opponent = fighter1, weight_class, method, outcome,
+         sig_strikes_landed_pm = fighter2_sig_strikes_landed_pm,
+         sig_strikes_absorbed_pm = fighter2_sig_strikes_absorbed_pm,
+         height = fighter2_height, dob = fighter2_dob, rounds = round) %>%
+  mutate(
+    win = ifelse(outcome == "fighter2", 1, 0),
+    loss = ifelse(outcome == "fighter1", 1, 0),
+    draw = ifelse(outcome == "Draw", 1, 0),
+    no_contest = ifelse(outcome == "No contest", 1, 0),
+    ko_suffered = ifelse(outcome == "fighter1" & grepl("KO/TKO", method, ignore.case = TRUE), 1, 0)
+  )
+
+all_fights <- bind_rows(fights_fighter1, fights_fighter2) %>%
+  filter(!is.na(fighter) & fighter != "" & !is.na(event_date)) %>%
+  mutate(weight_class = factor(weight_class)) # convertir weight_class en facteur pour l'agrégation
+
+# agréger les données par combattant
+fighter_stats <- all_fights %>%
+  group_by(fighter) %>% # utiliser le nom du combattant pour grouper
+  summarise(
+    first_fight_date = min(event_date, na.rm = TRUE),
+    last_fight_date = max(event_date, na.rm = TRUE),
+    num_fights = n(),
+    total_wins = sum(win, na.rm = TRUE), 
+    total_losses = sum(loss, na.rm = TRUE),
+    total_draws = sum(draw, na.rm = TRUE), 
+    total_ko_suffered = sum(ko_suffered, na.rm = TRUE),
+    avg_sig_strikes_absorbed_pm = mean(sig_strikes_absorbed_pm, na.rm = TRUE),
+    total_sig_strikes_absorbed = sum(sig_strikes_absorbed_pm * ifelse(is.na(rounds), 0, rounds) * 5, na.rm = TRUE),
+    avg_height_cm = mean(height, na.rm = TRUE),
+    dob_from_ufc = first(na.omit(dob)),
+    # Prendre la catégorie de poids la plus fréquente pour le combattant
+    main_weight_class = if (n() > 0) names(which.max(table(na.omit(weight_class)))) else NA,
+    total_rounds_fought = sum(rounds, na.rm = TRUE)
+  ) %>%
+  filter(is.finite(first_fight_date) & is.finite(last_fight_date) & num_fights > 0)
+
+
+# joindre avec les informations de pro_mma_fighters pour la date de naissance
+fighters_pro_dob <- fighters_pro %>% select(fighter_name, pro_dob = birth_date)
+
+fighter_stats <- fighter_stats %>%
+  left_join(fighters_pro_dob, by = c("fighter" = "fighter_name"))
+
+# Combiner les dates de naissance
+fighter_stats <- fighter_stats %>%
+  mutate(
+    final_dob = if_else(!is.na(dob_from_ufc), dob_from_ufc, pro_dob),
+    final_dob = as_date(final_dob)
+  ) %>%
+  filter(!is.na(final_dob)) # garder uniquement les combattants avec une date de naissance
+
+# calculer la durée de carrière et les âges
+fighter_stats <- fighter_stats %>%
+  mutate(
+    career_duration_days = as.numeric(last_fight_date - first_fight_date),
+    career_duration_years = career_duration_days / 365.25,
+    age_at_first_fight = as.numeric(first_fight_date - final_dob) / 365.25,
+    age_at_last_fight = as.numeric(last_fight_date - final_dob) / 365.25,
+    avg_career_age = (age_at_first_fight + age_at_last_fight) / 2
+  ) %>%
+  filter(career_duration_years >= 0 & age_at_first_fight > 0 & age_at_last_fight > 0) # filtrer les données incohérentes
+
+# calculer la fréquence des combats et autres taux
+fighter_stats <- fighter_stats %>%
+  mutate(
+    fight_frequency_per_year = ifelse(career_duration_years > 0, num_fights / career_duration_years, 0),
+    win_rate = ifelse(num_fights > 0, total_wins / num_fights, 0),
+    loss_rate = ifelse(num_fights > 0, total_losses / num_fights, 0),
+    ko_suffered_per_fight = ifelse(num_fights > 0, total_ko_suffered / num_fights, 0),
+    avg_rounds_fought = ifelse(num_fights > 0, total_rounds_fought / num_fights, 0)
+  )
+
+weight_order <- c("Women's Strawweight", "Women's Flyweight", "Women's Bantamweight", "Women's Featherweight",
+                  "Flyweight", "Bantamweight", "Featherweight", "Lightweight",
+                  "Welterweight", "Middleweight", "Light Heavyweight", "Heavyweight", "Catch Weight") 
+
+fighter_stats <- fighter_stats %>%
+  mutate(
+    main_weight_class = factor(main_weight_class, levels = weight_order, ordered = TRUE),
+    weight_class_numeric = as.numeric(main_weight_class)
+  )
+
+# S'assurer que les données nécessaires sont disponibles et sans NA/Inf pour les graphiques
+plot_data_base <- fighter_stats %>%
+  filter(
+    is.finite(career_duration_years),
+    is.finite(avg_sig_strikes_absorbed_pm),
+    is.finite(fight_frequency_per_year),
+    !is.na(main_weight_class),
+    is.finite(win_rate),
+    is.finite(ko_suffered_per_fight)
+  )
+```
+
+Maintenons nous pouvons traiter la question. 
+
+#### Visualisation 1 : Analyse des corrélations entre variables
+
+Traçons une matrice de corrélation pour pouvoir quels variables semblent les plus corrélés à la durée de carrière.
+
+```{r correlation_analysis}
+heatmap_data_updated <- fighter_stats %>%
+  select(
+    career_duration_years,
+    age_at_first_fight,
+    avg_height_cm,
+    fight_frequency_per_year,
+    win_rate,
+    ko_suffered_per_fight,
+    avg_sig_strikes_absorbed_pm,
+    avg_rounds_fought,
+    weight_class_numeric # Nouvelle variable
+  ) %>%
+  # remplacer les NaN/Inf par NA pour que complete.cases fonctionne correctement
+  mutate_all(~ifelse(is.nan(.) | is.infinite(.), NA, .)) %>%
+  filter(complete.cases(.)) #garder uniquement les lignes sans NA
+
+
+  cor_matrix_updated <- cor(heatmap_data_updated, use = "pairwise.complete.obs")
+  
+  
+  # générer la heatmap avec corrplot 
+  corrplot(
+    cor_matrix_updated,
+    method = "color",
+    type = "upper",
+    order = "hclust",
+    addCoef.col = "black",
+    number.cex = 0.7,
+    tl.col = "black",
+    tl.srt = 45,
+    tl.cex = 0.75,
+    diag = FALSE,
+    col = rev(colorRampPalette(c("red", "white", "blue"))(200)), 
+    title = "Heatmap de Corrélation (Variables Normalisées/Pertinentes)",
+    mar = c(1, 1, 2, 1)
+  )
+```
+
+**Interprétation** : La matrice de corrélation révèle plusieurs relations importantes :
+
+- Le **taux de victoire** présente une corrélation positive notable (0.40) avec la durée de carrière, ce qui pourrait sous entendre que plus on gagne, plus on reste dans l'organisation longtemps.
+- L'**âge au premier combat** montre une corrélation négative (-0.25), suggérant qu'un début tardif limite la longévité (ce qui est logique, car commencer plus tard signifie avoir moins de marge).
+- La **fréquence des combats par an** est négativement corrélée (-0.21) à la durée de carrière. Faire trop de combats impacterait négativement la carrière.
+- Les **KO subis par combat** présentent une corrélation négative (-0.16) avec la longévité. Les K.O. affaibliraient le combattant qui ferait une carrière plus courte.
+
+On observe également une forte corrélation (0.80) entre la taille moyenne et la catégorie de poids, ce qui correspond à une relation totalement logique.
+
+#### Visualisation 2 : Impact du taux de victoire
+
+On trace donc la relation entre le taux de victoire et la durée de carrière. En filtrant ceux ayant plus de 5 combats (pour éviter l'agglomération aux bornes).
+
+```{r victory_rate}
+# filtrer pour ne garder que les combattants avec au moins 5 combats
+plot_data_valid_fights <- plot_data_base %>%
+  filter(num_fights >= 5)
+
+p5 <- ggplot(plot_data_valid_fights, aes(x = win_rate, y = career_duration_years)) +
+    geom_point(alpha = 0.3, shape = 16, color = "purple4") +
+    geom_smooth(method = "loess", col = "seagreen", se = FALSE, span = 0.75) +
+    labs(
+      title = "Influence du Taux de Victoire sur la Durée de Carrière",
+      subtitle = "Relation entre le pourcentage de victoires et la longévité (combattants avec ≥ 5 combats)",
+      x = "Taux de Victoire (Victoires / Total Combats)",
+      y = "Durée de Carrière (Années)",
+      caption = "Source: Données UFC agrégées"
+    ) +
+    theme_bw() +
+    theme(plot.title = element_text(hjust = 0.5), plot.subtitle = element_text(hjust = 0.5))
+print(p5)
+```
+
+**Interprétation** :
+
+- **Zone optimale** : taux de victoire entre 50-60%
+- **Carrières courtes** : taux très faibles (<20%) ou très élevés (>90%)
+- **Courbe en dôme** : la longévité maximale correspond à un succès modéré mais constant
+
+Néanmoins en regardant les noms des combattants avec le meilleur ratio, on voit que la majorité combat encore et que leur carrière n'est pas encore finie. Ainsi la tendance est croissante (et c'est logique). Plus on combattant gagne, et plus il semble rester longtemps dans l'UFC.
+
+#### Visualisation 3 : Relation entre coups absorbés et longévité
+
+Passons maintenant à l'impact des coups sur la durée de carrière. Ici on peut faire l'hypothèse que plus un combattant reçois de coups et plus sa carrière est courte.
+
+```{r damage_frequency_plot}
+  p1 <- ggplot(plot_data_base, aes(x = avg_sig_strikes_absorbed_pm, y = career_duration_years)) +
+    geom_point(alpha = 0.3, shape = 16, color = "steelblue") +
+    geom_smooth(method = "loess", col = "firebrick", se = FALSE, span = 0.75) +
+    labs(
+      title = "Impact des Coups Absorbés sur la Durée de Carrière",
+      subtitle = "Relation entre la moyenne des coups significatifs absorbés par minute et la longévité",
+      x = "Moy. Coups Significatifs Absorbés / Minute",
+      y = "Durée de Carrière (Années)",
+      caption = "Source: Données UFC agrégées"
+    ) +
+    theme_bw() +
+    coord_cartesian(ylim = c(0, NA), xlim = c(0, 10)) +
+    theme(plot.title = element_text(hjust = 0.5), plot.subtitle = element_text(hjust = 0.5))
+  print(p1)
+```
+**Interprétation** : On voit ici :
+
+- **Zone d'augmentation** (0-2.5 coups/minute) : la longévité s'améliore avec un engagement modéré
+- **Plateau optimal** (2.5-4 coups/minute) : zone de performance équilibrée
+- **Déclin** (>5 coups/minute) : diminution significative de la durée de carrière
+
+Cette courbe en cloche suggère qu'un certain niveau d'engagement est bénéfique, mais qu'une exposition excessive aux dommages devient problématique et peut visiblement causer assez de dommages pour arrêter une carrière par accumulation. Cela pourrait aussi simplement être lié au fait que plus un combattant est nul et plus il reçoit de coups, ce qui vient compléter le graphique précédent.
+
+#### Visualisation 4 : Influence du rythme des combats
+
+Il est possible d'enchaîner directement avec le rythme des combats. On s'attend à ce que trop de combats par an fatigue le combattant et diminue sa durée de carrière.
+
+```{r combats_frequency_plot}
+p2 <- ggplot(plot_data_base, aes(x = fight_frequency_per_year, y = career_duration_years)) +
+    geom_point(alpha = 0.3, shape = 16, color = "darkgreen") +
+    # Utiliser une méthode GAM au lieu de loess avec contrainte de non-négativité
+    stat_smooth(method = "gam", formula = y ~ s(x), 
+               col = "darkorange", se = FALSE) +
+    labs(
+      title = "Fréquence des Combats et Longévité de Carrière",
+      subtitle = "Relation entre le nombre de combats par an et la durée totale de carrière",
+      x = "Fréquence des Combats (Combats / An)",
+      y = "Durée de Carrière (Années)",
+      caption = "Source: Données UFC agrégées"
+    ) +
+    theme_bw() +
+    coord_cartesian(ylim = c(0, NA), xlim = c(0, 10)) +
+    theme(plot.title = element_text(hjust = 0.5), plot.subtitle = element_text(hjust = 0.5))
+  print(p2)
+```
+
+**Interprétation** : La fréquence des combats montre également une relation optimale.
+
+- **Pic de longévité** : environ 1 combat par an
+- **Déclin rapide** : au-delà de 3 combats annuels
+- **Carrières très courtes** : plus de 5 combats par an
+
+Ces données indiquent l'importance d'une récupération adéquate entre les combats pour maintenir une carrière durable.
+
+#### Visualisation 5 : Relation entre KO subis et longévité
+
+Par continuité, analysons le nombre de KO par combat selon la longétivité. Pour que la visualisation soit claire, nous avons divisé les combattants en 3 catégories selon leur durée de carrière.
+
+```{r ko_analysis}
+if(nrow(plot_data_base %>% filter(is.finite(career_duration_years))) > 0) {
+  quantiles_career <- quantile(plot_data_base$career_duration_years[is.finite(plot_data_base$career_duration_years)], probs = c(0.33, 0.66), na.rm = TRUE)
+  
+  # Formatter les quantiles pour l'affichage
+  quantile_labels <- paste0("Courte: ≤ ", round(quantiles_career[1], 1), " ans, ",
+                            "Moyenne: > ", round(quantiles_career[1], 1), " et ≤ ", round(quantiles_career[2], 1), " ans, ",
+                            "Longue: > ", round(quantiles_career[2], 1), " ans")
+  
+  plot_data_longevity_cat <- plot_data_base %>%
+    mutate(
+      longevity_category = case_when(
+        career_duration_years <= quantiles_career[1] ~ "Courte",
+        career_duration_years <= quantiles_career[2] ~ "Moyenne",
+        TRUE ~ "Longue"
+      ),
+      longevity_category = factor(longevity_category, levels = c("Courte", "Moyenne", "Longue"))
+    )
+  
+  # Calculer la moyenne et l'erreur standard de ko_suffered_per_fight pour chaque catégorie
+  summary_ko_longevity <- plot_data_longevity_cat %>%
+    filter(!is.na(longevity_category)) %>%
+    group_by(longevity_category) %>%
+    summarise(
+      mean_ko_suffered = mean(ko_suffered_per_fight, na.rm = TRUE),
+      sd_ko_suffered = sd(ko_suffered_per_fight, na.rm = TRUE),
+      n_ko_suffered = n(),
+      se_ko_suffered = sd_ko_suffered / sqrt(n_ko_suffered),
+      .groups = 'drop'
+    ) %>%
+    mutate(longevity_category_n = paste0(longevity_category, "\n(n=", n_ko_suffered, ")"))
+  
+  # Ré-ordonner les niveaux du facteur pour l'affichage avec (n=...)
+  summary_ko_longevity$longevity_category_n <- factor(summary_ko_longevity$longevity_category_n,
+                                                      levels = paste0(levels(summary_ko_longevity$longevity_category),
+                                                                      "\n(n=", summary_ko_longevity$n_ko_suffered[match(levels(summary_ko_longevity$longevity_category), summary_ko_longevity$longevity_category)], ")"))
+  
+  
+  # Moyenne des KO subis par combat par catégorie de longévité
+  if(nrow(summary_ko_longevity) > 0 && !all(is.na(summary_ko_longevity$mean_ko_suffered))) {
+    p4 <- ggplot(summary_ko_longevity, aes(x = longevity_category_n, y = mean_ko_suffered, fill = longevity_category)) +
+      geom_bar(stat = "identity", na.rm = TRUE, position = position_dodge()) +
+      labs(
+        title = "Moyenne des KO Subis par Combat selon la Longévité de Carrière",
+        subtitle = paste("Comparaison du taux de KO subis (avec effectifs).\nDéfinitions - ", quantile_labels),
+        x = "Catégorie de Longévité de Carrière (avec effectif)",
+        y = "Moy. KO Subis par Combat",
+        caption = "Source: Données UFC agrégées"
+      ) +
+      theme_bw() +
+      theme(legend.position = "none",
+            plot.title = element_text(hjust = 0.5), 
+            plot.subtitle = element_text(hjust = 0.5, size = 9))
+    print(p4)
+  } else {
+    print("Pas assez de données agrégées ou valides pour le graphique 4.")
+  }
+} else {
+  print("Pas assez de données de durée de carrière valides pour créer les catégories de longévité pour le graphique 4.")
+}
+```
+
+**Interprétation** : L'analyse des KO révèle une tendance claire :
+
+- **Carrières courtes** (≤0.9 ans) : ~0.24 KO par combat
+- **Carrières moyennes** (0.9-3.4 ans) : ~0.20 KO par combat  
+- **Carrières longues** (>3.4 ans) : ~0.15 KO par combat
+
+Cette progression décroissante confirme que la capacité à éviter les KO est déterminante pour la longévité. Néanmoins, ce n'est pas forcément lié aux dommages physiques, mais simplement que si le combattant est KO, il perd le combat et a donc moins de chances de continué sa carrière à l'UFC.
+
+#### Visualisation 6 : Variations selon la catégorie de poids
+
+Même si la matrice de corrélation indiquait aucune corrélation entre les catégories de poids et la durée de carrière, il est intéréssant de voir la dispertion de la longétivité selon les catégories.
+
+```{r weight_factors}
+# Durée de carrière par Catégorie de Poids Principale
+# calculer le nombre d'observations par groupe pour l'affichage
+n_by_weight_class <- plot_data_base %>%
+  filter(!is.na(main_weight_class)) %>%
+  group_by(main_weight_class) %>%
+  summarise(n = n(), .groups = 'drop')
+
+plot_data_boxplot <- plot_data_base %>%
+  filter(!is.na(main_weight_class)) %>%
+  left_join(n_by_weight_class, by = "main_weight_class") %>%
+  mutate(main_weight_class_n = paste0(main_weight_class, "\n(n=", n, ")"))
+
+# réordonner les niveaux du facteur pour l'affichage avec (n=...)
+plot_data_boxplot$main_weight_class_n <- factor(plot_data_boxplot$main_weight_class_n,
+                                                levels = paste0(levels(plot_data_base$main_weight_class),
+                                                                "\n(n=", n_by_weight_class$n[match(levels(plot_data_base$main_weight_class), n_by_weight_class$main_weight_class)], ")"))
+
+
+if(nrow(plot_data_boxplot) > 0 && length(unique(plot_data_boxplot$main_weight_class_n[!is.na(plot_data_boxplot$main_weight_class_n)])) > 0) {
+  p3 <- ggplot(plot_data_boxplot, aes(x = main_weight_class_n, y = career_duration_years, fill = main_weight_class)) +
+    geom_boxplot(na.rm = TRUE, outlier.shape = 1, outlier.alpha = 0.5) + 
+    labs(
+      title = "Distribution de la Durée de Carrière par Catégorie de Poids",
+      subtitle = "Comparaison de la longévité entre les différentes catégories de poids (avec effectifs)",
+      x = "Catégorie de Poids Principale (avec effectif)",
+      y = "Durée de Carrière (Années)",
+      caption = "Source: Données UFC agrégées"
+    ) +
+    theme_bw() +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1, size=8), 
+          legend.position = "none",
+          plot.title = element_text(hjust = 0.5), plot.subtitle = element_text(hjust = 0.5))
+  print(p3)
+} else {
+  print("Pas assez de données ou de catégories de poids valides.")
+}
+```
+
+**Interprétation** : La distribution par catégorie de poids montre des disparités notables :
+
+- **Catégories favorables** : poids moyens et mi-lourds présentent les médianes de longévité les plus élevées
+- **Catégories moins favorables** : poids mouches masculins montrent des carrières généralement plus courtes
+- **Variabilité importante** : les catégories féminines présentent une grande dispersion
+
+La moyenne est globalement la même partout ce qui confirme la non-corrélation indiquée par la matrice. Le poids n'influent pas sur la durée de carrière.
+
+#### Conclusion question 6
+
+Cette analyse révèle que les facteurs influençant la longévité des carrières UFC sont probablement plus complexes que ne le suggèrent les corrélations simples :
+
+1. **Biais de sélection** : l'UFC elle-même influence qui reste et qui part, indépendamment des performances pures
+2. **Causalité inversée** : dans certains cas, c'est peut-être la longévité qui influence les statistiques, et non l'inverse
+3. **Facteurs non mesurés** : motivation personnelle, opportunités extérieures, politique interne de l'UFC, évolution des standards du sport
+
+Les résultats suggèrent qu'une approche équilibrée (taux de victoire modéré, exposition contrôlée aux dommages, rythme de combat mesuré) pourrait favoriser la longévité. Cependant, il reste difficile de déterminer si ces patterns reflètent des choix stratégiques optimaux ou simplement les contraintes structurelles du système UFC.
+
+Une analyse plus poussée nécessiterait des données sur les motivations des combattants, les décisions de l'organisation, et l'évolution du contexte économique du MMA. Il serait aussi interressant de réaliser une régression pour voir si tous les facteurs que nous avons étudiés ont un réel impact sur la durée de carrière.
+
 
 ### Question 7 : Quel combattant a montré la progression la plus spectaculaire dans ses performances ?
 
