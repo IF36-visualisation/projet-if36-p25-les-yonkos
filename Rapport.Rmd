@@ -77,6 +77,9 @@ library(tidyr)
 library(scales)
 library(readr)
 library(stringr)
+library(tidyverse)
+library(lubridate)
+
 
 data <- read_csv("data/complete_ufc_data.csv", show_col_types = FALSE)
 
@@ -1255,10 +1258,6 @@ Nous supposons que le combattant le plus spectaculaire est sûrement celui qui a
 Tout d'abord, nous allons commencer par mettre en place les statistiques de combats (victoires/défaites/no contests). 
 
 ```{r data_combat}
-library(tidyverse)
-library(ggplot2)
-library(lubridate)
-
 # 1. Statistiques de base : victoires, défaites, no contests
 
 # Victoires
@@ -1368,10 +1367,6 @@ Cette visualisation va permettre de vérifier si le classement précédent est c
 
 ```{r barchart_combattant2}
 # 4. Graphique des 10 combattants avec le plus de victoires et le moins de défaites/no contests
-library(tidyverse)
-
-# Charger les données
-df <- read.csv("data/complete_ufc_data.csv")
 
 # Nettoyage et construction des stats
 df_clean <- df %>%
