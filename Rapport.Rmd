@@ -1427,3 +1427,442 @@ Cependant, ses statistiques techniques (précision des frappes, défense des fra
 
 ##### Conclusion question 7
 D'après nos 3 graphiques, on confirme que Jim Miller est le combattant ayant montré la progression la plus spectaculaire dans ses performances à l’UFC. Il occupe simultanément la première place en nombre total de combats, en nombre de victoires, et affiche une évolution marquée dans ses résultats. Sa longévité dans l’octogone, combinée à une constance et une amélioration notable de ses performances au fil du temps, témoignent d'une trajectoire ascendante remarquable. Contrairement à d'autres combattants dont la carrière a pu être marquée par des hauts et des bas, Jim Miller a su maintenir un haut niveau de compétitivité tout en accumulant les victoires, ce qui reflète une progression solide et durable dans le monde professionnel.
+
+
+### Question 8 : En quoi le style de combat, qu'il soit offensif ou défensif, influence-t-il le déroulement et l'issue d’un combat ?
+
+```{r load_data}
+df <- read.csv("C:/Users/moham/Downloads/complete_ufc_data (2) (1).csv")
+
+filtered_df <- df %>%
+  filter(weight_class %in% c("Featherweight", "Middleweight", "Heavyweight"))
+
+sig_strikes <- filtered_df %>%
+  select(weight_class, fighter1_sig_strikes_landed_pm, fighter2_sig_strikes_landed_pm) %>%
+  rename(f1 = fighter1_sig_strikes_landed_pm, f2 = fighter2_sig_strikes_landed_pm) %>%
+  pivot_longer(cols = c(f1, f2), names_to = "fighter", values_to = "strikes") %>%
+  filter(!is.na(strikes))
+
+avg_strikes <- sig_strikes %>%
+  group_by(weight_class) %>%
+  summarise(avg_strikes = mean(strikes, na.rm = TRUE))
+
+
+```
+
+# Différence entre catégories
+```{r graph}
+ggplot(avg_strikes, aes(x = weight_class, y = avg_strikes, fill = weight_class)) +
+  geom_bar(stat = "identity") +
+  geom_text(aes(label = round(avg_strikes, 1)), vjust = -0.5, size = 4) +
+  labs(
+    title = "Nombre moyen de coups significatifs/min par catégorie de poids",
+    x = "Catégorie de poids",
+    y = "Coups/min"
+  ) +
+  theme_minimal() +
+  theme(legend.position = "none")
+```
+
+### On observe des différences notables selon la catégorie de poids. Les combattants Featherweight tendent à envoyer plus de frappes significatives par minute, ce qui peut être attribué à leur mobilité et à leur style plus orienté vers les échanges rapides. À l'inverse, les Heavyweights frappent moins souvent mais avec potentiellement plus de puissance. Il faut donc garder à l'esprit le fait que les stratégies de combats peuvent être significativement différentes selon la catégorie de poids.
+
+
+
+
+
+
+# Analyse des différences stratégiques entre les gagnants et les perdants
+
+```{r graph_2}
+# Créer une variable "vainqueur"
+df_resultat <- df %>%
+  filter(outcome %in% c("fighter1", "Draw", "No contest")) %>%
+  mutate(winner = case_when(
+    outcome == "fighter1" ~ "fighter1",
+    outcome %in% c("Draw", "No contest") ~ "None",
+    TRUE ~ "fighter2"
+  ))
+
+# Séparer les frappes par combattant et associer le résultat
+f1 <- df_resultat %>%
+  transmute(strikes = fighter1_sig_strikes_landed_pm,
+            result = ifelse(winner == "fighter1", "Victoire", "Défaite"))
+
+f2 <- df_resultat %>%
+  transmute(strikes = fighter2_sig_strikes_landed_pm,
+            result = ifelse(winner == "fighter2", "Victoire", "Défaite"))
+
+strikes_df <- bind_rows(f1, f2) %>%
+  filter(!is.na(strikes))
+
+# Visualisation
+ggplot(strikes_df, aes(x = result, y = strikes, fill = result)) +
+  geom_boxplot(alpha = 0.7) +
+  labs(
+    title = "Frappes significatives par minute : Victoire vs Défaite",
+    x = "Résultat du combat",
+    y = "Frappes significatives / min"
+  ) +
+  theme_minimal() +
+  theme(legend.position = "none")
+```
+
+### Les vainqueurs envoient généralement plus de frappes significatives par minute que les perdants. Cela suggère qu’un style offensif, basé sur l'activité en striking, est souvent associé à une plus grande probabilité de victoire.
+
+
+```{r graph_3}
+# Préparer les données pour takedowns
+f1_td <- df_resultat %>%
+  transmute(takedowns = fighter1_takedown_avg_per15m,
+            result = ifelse(winner == "fighter1", "Victoire", "Défaite"))
+
+f2_td <- df_resultat %>%
+  transmute(takedowns = fighter2_takedown_avg_per15m,
+            result = ifelse(winner == "fighter2", "Victoire", "Défaite"))
+
+takedown_df <- bind_rows(f1_td, f2_td) %>%
+  filter(!is.na(takedowns))
+
+# Visualisation
+ggplot(takedown_df, aes(x = result, y = takedowns, fill = result)) +
+  geom_boxplot(alpha = 0.7) +
+  labs(
+    title = "Tentatives de takedown par 15 minutes : Victoire vs Défaite",
+    x = "Résultat du combat",
+    y = "Tentatives de takedown / 15 min"
+  ) +
+  theme_minimal() +
+  theme(legend.position = "none")
+```
+
+### Les gagnants ont, en moyenne, un volume légèrement supérieur de tentatives de takedown. Bien que moins flagrant que pour les frappes, cela montre que les compétences en lutte peuvent jouer un rôle déterminant, notamment en contrôle du combat au sol.
+
+```{r graph_4}
+# Préparation des données : frappes absorbées
+f1_abs <- df_resultat %>%
+  transmute(absorbed = fighter1_sig_strikes_absorbed_pm,
+            result = ifelse(winner == "fighter1", "Victoire", "Défaite"))
+
+f2_abs <- df_resultat %>%
+  transmute(absorbed = fighter2_sig_strikes_absorbed_pm,
+            result = ifelse(winner == "fighter2", "Victoire", "Défaite"))
+
+absorbed_df <- bind_rows(f1_abs, f2_abs) %>%
+  filter(!is.na(absorbed))
+
+# Visualisation
+ggplot(absorbed_df, aes(x = result, y = absorbed, fill = result)) +
+  geom_boxplot(alpha = 0.7) +
+  labs(
+    title = "Frappes significatives absorbées par minute : Victoire vs Défaite",
+    x = "Résultat du combat",
+    y = "Frappes absorbées / min"
+  ) +
+  theme_minimal() +
+  theme(legend.position = "none")
+```
+
+### Les perdants encaissent significativement plus de frappes. Cela confirme qu’encaisser trop de coups sans réponse efficace augmente fortement le risque de défaite.
+
+
+```{r graph_5}
+# Préparation des données : frappes défendues
+f1_def <- df_resultat %>%
+  transmute(defended = fighter1_sig_strikes_defended,
+            result = ifelse(winner == "fighter1", "Victoire", "Défaite"))
+
+f2_def <- df_resultat %>%
+  transmute(defended = fighter2_sig_strikes_defended,
+            result = ifelse(winner == "fighter2", "Victoire", "Défaite"))
+
+defended_df <- bind_rows(f1_def, f2_def) %>%
+  filter(!is.na(defended))
+
+# Visualisation
+ggplot(defended_df, aes(x = result, y = defended, fill = result)) +
+  geom_boxplot(alpha = 0.7) +
+  labs(
+    title = "Frappes significatives défendues : Victoire vs Défaite",
+    x = "Résultat du combat",
+    y = "Taux de défense des frappes significatives"
+  ) +
+  theme_minimal() +
+  theme(legend.position = "none")
+```
+
+### Les vainqueurs présentent un taux de défense plus élevé. Une meilleure capacité à éviter les frappes semble être un facteur clé pour gagner, notamment en stand-up.
+
+```{r graph_6}
+# Préparation des données : takedown defense
+f1_td_def <- df_resultat %>%
+  transmute(defence = fighter1_takedown_defence,
+            result = ifelse(winner == "fighter1", "Victoire", "Défaite"))
+
+f2_td_def <- df_resultat %>%
+  transmute(defence = fighter2_takedown_defence,
+            result = ifelse(winner == "fighter2", "Victoire", "Défaite"))
+
+td_def_df <- bind_rows(f1_td_def, f2_td_def) %>%
+  filter(!is.na(defence))
+
+# Visualisation
+ggplot(td_def_df, aes(x = result, y = defence, fill = result)) +
+  geom_boxplot(alpha = 0.7) +
+  labs(
+    title = "Taux de défense contre les takedowns : Victoire vs Défaite",
+    x = "Résultat du combat",
+    y = "Taux de défense (0 à 1)"
+  ) +
+  theme_minimal() +
+  theme(legend.position = "none")
+```
+
+### Une défense de takedown plus solide est associée à la victoire. Cela montre l'importance de résister aux tentatives de mise au sol, en particulier contre des combattants spécialisés en grappling.
+
+# Mise en avant des tendances favorisant la victoire
+```{r graph_7}
+# Combiner les frappes envoyées avec le résultat
+f1 <- df_resultat %>%
+  transmute(strikes = fighter1_sig_strikes_landed_pm,
+            result = ifelse(winner == "fighter1", 1, 0))
+
+f2 <- df_resultat %>%
+  transmute(strikes = fighter2_sig_strikes_landed_pm,
+            result = ifelse(winner == "fighter2", 1, 0))
+
+strikes_volume_df <- bind_rows(f1, f2) %>%
+  filter(!is.na(strikes)) %>%
+  mutate(bin = cut(strikes, breaks = seq(0, 10, by = 1), include.lowest = TRUE))
+
+# Calcul du taux de victoire pour chaque tranche de volume
+strikes_summary <- strikes_volume_df %>%
+  group_by(bin) %>%
+  summarise(taux_victoire = mean(result), .groups = "drop")
+
+# Visualisation
+ggplot(strikes_summary, aes(x = bin, y = taux_victoire)) +
+  geom_col(fill = "#2C77B8") +
+  geom_text(aes(label = scales::percent(taux_victoire, accuracy = 1)), 
+            vjust = -0.3, size = 3.5) +
+  scale_y_continuous(labels = scales::percent_format()) +
+  labs(
+    title = "Taux de victoire en fonction du volume de frappes significatives envoyées",
+    x = "Frappes significatives / min (tranches)",
+    y = "Taux de victoire"
+  ) +
+  theme_minimal()
+```
+
+### Le taux de victoire augmente clairement avec le volume de frappes envoyées. Cela confirme qu’une pression constante et une activité offensive élevée favorisent la victoire.
+
+```{r graph_8}
+# Combiner les frappes encaissées avec le résultat
+f1_abs <- df_resultat %>%
+  transmute(absorbed = fighter1_sig_strikes_absorbed_pm,
+            result = ifelse(winner == "fighter1", 1, 0))
+
+f2_abs <- df_resultat %>%
+  transmute(absorbed = fighter2_sig_strikes_absorbed_pm,
+            result = ifelse(winner == "fighter2", 1, 0))
+
+absorbed_volume_df <- bind_rows(f1_abs, f2_abs) %>%
+  filter(!is.na(absorbed)) %>%
+  mutate(bin = cut(absorbed, breaks = seq(0, 10, by = 1), include.lowest = TRUE))
+
+# Calcul du taux de victoire pour chaque tranche de frappes encaissées
+absorbed_summary <- absorbed_volume_df %>%
+  group_by(bin) %>%
+  summarise(taux_victoire = mean(result), .groups = "drop")
+
+# Visualisation
+ggplot(absorbed_summary, aes(x = bin, y = taux_victoire)) +
+  geom_col(fill = "#D95F02") +
+  geom_text(aes(label = scales::percent(taux_victoire, accuracy = 1)), 
+            vjust = -0.3, size = 3.5) +
+  scale_y_continuous(labels = scales::percent_format()) +
+  labs(
+    title = "Taux de victoire selon le volume de frappes significatives encaissées",
+    x = "Frappes encaissées / min (tranches)",
+    y = "Taux de victoire"
+  ) +
+  theme_minimal()
+```
+
+### Le taux de victoire diminue avec l'augmentation des frappes encaissées. Cela renforce l'idée qu’une bonne défense et un faible nombre de coups reçus sont essentiels pour gagner.
+
+```{r graph_9}
+# Combiner les frappes défendues avec le résultat
+f1_def <- df_resultat %>%
+  transmute(defended = fighter1_sig_strikes_defended,
+            result = ifelse(winner == "fighter1", 1, 0))
+
+f2_def <- df_resultat %>%
+  transmute(defended = fighter2_sig_strikes_defended,
+            result = ifelse(winner == "fighter2", 1, 0))
+
+defended_volume_df <- bind_rows(f1_def, f2_def) %>%
+  filter(!is.na(defended)) %>%
+  mutate(bin = cut(defended, breaks = seq(0, 1, by = 0.1), include.lowest = TRUE))
+
+# Calcul du taux de victoire par tranche
+defended_summary <- defended_volume_df %>%
+  group_by(bin) %>%
+  summarise(taux_victoire = mean(result), .groups = "drop")
+
+# Visualisation
+ggplot(defended_summary, aes(x = bin, y = taux_victoire)) +
+  geom_col(fill = "#1B9E77") +
+  geom_text(aes(label = scales::percent(taux_victoire, accuracy = 1)), 
+            vjust = -0.3, size = 3.5) +
+  scale_y_continuous(labels = scales::percent_format()) +
+  labs(
+    title = "Taux de victoire selon le taux de frappes significatives défendues",
+    x = "Taux de défense (tranches)",
+    y = "Taux de victoire"
+  ) +
+  theme_minimal()
+```
+
+### Les combattants qui défendent mieux les frappes ont un taux de victoire plus élevé. Cela suggère que l'efficacité défensive, bien que moins visible que l'offensive, est un levier important de performance.
+
+```{r graph_10}
+# Préparer les données pour gagnants et perdants
+f1 <- df_resultat %>%
+  transmute(
+    accuracy = fighter1_sig_strikes_accuracy,
+    result = ifelse(outcome == "fighter1", 1, 0)
+  )
+
+f2 <- df_resultat %>%
+  transmute(
+    accuracy = fighter2_sig_strikes_accuracy,
+    result = ifelse(outcome == "fighter2", 1, 0)
+  )
+
+accuracy_df <- bind_rows(f1, f2) %>%
+  filter(!is.na(accuracy)) %>%
+  mutate(
+    bin = cut(accuracy, breaks = seq(0, 1, by = 0.1), include.lowest = TRUE)
+  )
+
+# Calcul du taux de victoire et du nombre de cas
+accuracy_summary <- accuracy_df %>%
+  group_by(bin) %>%
+  summarise(
+    taux_victoire = mean(result),
+    n = n(),
+    .groups = "drop"
+  )
+
+# Bar plot avec pourcentage et nombre de cas
+ggplot(accuracy_summary, aes(x = bin, y = taux_victoire)) +
+  geom_col(fill = "#2C77B8") +
+  geom_text(aes(label = paste0(scales::percent(taux_victoire, accuracy = 1), "\n(n=", n, ")")), 
+            vjust = -0.5, size = 3.5) +
+  scale_y_continuous(labels = scales::percent_format(), limits = c(0, 1.1)) +
+  labs(
+    title = "Taux de victoire en fonction de la précision des frappes",
+    x = "Précision (tranches)",
+    y = "Taux de victoire"
+  ) +
+  theme_minimal()
+```
+
+### Les combattants plus précis dans leurs frappes ont un taux de victoire supérieur. La précision est donc une variable de succès, surtout si elle est combinée à un volume élevé.
+
+
+#  Y'a t-il un secteur à privilégier pour espérer gagner
+```{r graph_11}
+
+# Extraire gagnants et perdants dans les 3 catégories
+combined_df <- df_resultat %>%
+  filter(
+    outcome %in% c("fighter1", "fighter2"),
+    weight_class %in% c("Welterweight", "Featherweight", "Heavyweight")
+  ) %>%
+  mutate(
+    fighter = ifelse(outcome == "fighter1", fighter1, fighter2),
+    strikes_landed = ifelse(outcome == "fighter1", fighter1_sig_strikes_landed_pm, fighter2_sig_strikes_landed_pm),
+    strikes_defended = ifelse(outcome == "fighter1", fighter1_sig_strikes_defended, fighter2_sig_strikes_defended),
+    result = "Victoire"
+  ) %>%
+  bind_rows(
+    df_resultat %>%
+      filter(
+        outcome %in% c("fighter1", "fighter2"),
+        weight_class %in% c("Welterweight", "Featherweight", "Heavyweight")
+      ) %>%
+      mutate(
+        fighter = ifelse(outcome == "fighter1", fighter2, fighter1),
+        strikes_landed = ifelse(outcome == "fighter1", fighter2_sig_strikes_landed_pm, fighter1_sig_strikes_landed_pm),
+        strikes_defended = ifelse(outcome == "fighter1", fighter2_sig_strikes_defended, fighter1_sig_strikes_defended),
+        result = "Défaite"
+      )
+  ) %>%
+  filter(!is.na(strikes_landed), !is.na(strikes_defended))
+
+# Bubble chart final (taille fixe, couleur par résultat)
+ggplot(combined_df, aes(
+  x = strikes_landed,
+  y = strikes_defended,
+  color = result
+)) +
+  geom_point(alpha = 0.6, size = 3) +
+  scale_color_manual(values = c("Victoire" = "green3", "Défaite" = "red3")) +
+  labs(
+    title = "Positionnement offensif/défensif des combattants",
+    subtitle = "Gagnants (verts) vs Perdants (rouges)",
+    x = "Frappes significatives envoyées / min",
+    y = "Taux de frappes significatives défendues",
+    color = "Résultat"
+  ) +
+  theme_minimal()
+
+
+
+
+# Combattants gagnants
+winners_acc_abs <- df_resultat %>%
+  filter(
+    outcome %in% c("fighter1", "fighter2"),
+    weight_class %in% c("Welterweight", "Featherweight", "Heavyweight")
+  ) %>%
+  mutate(
+    fighter = ifelse(outcome == "fighter1", fighter1, fighter2),
+    accuracy = ifelse(outcome == "fighter1", fighter1_sig_strikes_accuracy, fighter2_sig_strikes_accuracy),
+    absorbed = ifelse(outcome == "fighter1", fighter1_sig_strikes_absorbed_pm, fighter2_sig_strikes_absorbed_pm),
+    result = "Victoire"
+  )
+
+# Combattants perdants
+losers_acc_abs <- df_resultat %>%
+  filter(
+    outcome %in% c("fighter1", "fighter2"),
+    weight_class %in% c("Welterweight", "Featherweight", "Heavyweight")
+  ) %>%
+  mutate(
+    fighter = ifelse(outcome == "fighter1", fighter2, fighter1),
+    accuracy = ifelse(outcome == "fighter1", fighter2_sig_strikes_accuracy, fighter1_sig_strikes_accuracy),
+    absorbed = ifelse(outcome == "fighter1", fighter2_sig_strikes_absorbed_pm, fighter1_sig_strikes_absorbed_pm),
+    result = "Défaite"
+  )
+
+# Combiner et nettoyer
+combined_acc_abs <- bind_rows(winners_acc_abs, losers_acc_abs) %>%
+  filter(!is.na(accuracy), !is.na(absorbed))
+
+# Graphique
+ggplot(combined_acc_abs, aes(x = accuracy, y = absorbed, color = result)) +
+  geom_point(alpha = 0.6, size = 3) +
+  scale_color_manual(values = c("Victoire" = "green3", "Défaite" = "red3")) +
+  labs(
+    title = "Précision des frappes vs Coups encaissés",
+    subtitle = "Gagnants (verts) vs Perdants (rouges)",
+    x = "Précision des frappes significatives",
+    y = "Frappes significatives encaissées / min",
+    color = "Résultat"
+  ) +
+  theme_minimal()
+```
+
+### Les deux derniers graphiques montrent que les gagnants et les perdants peuvent partager des caractéristiques similaires en matière de volume offensif, de précision ou de défense. Cela signifie qu’un style ou un indicateur isolé ne suffit pas à expliquer le succès. Ce résultat met en évidence la complexité du MMA, où l’issue d’un combat dépend probablement d’un ensemble d’éléments combinés : stratégie, timing, conditions du jour, erreurs adverses, etc.
