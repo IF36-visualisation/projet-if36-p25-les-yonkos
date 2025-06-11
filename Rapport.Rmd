@@ -1320,9 +1320,9 @@ Ce graphique met en évidence les dix combattants ayant remporté le plus grand 
 On voit donc que Jim Miller est le combattant le plus victorieux mais est-ce qu'il est vraiment le combattant ayant la progression la plus spectaculaire. Le graphique répond partiellement à la question car il faudrait vérifier si le combattant avec le plus de victoires n'a pas plus de défaites par rapport aux autres. En effet, on pourrait avoir un combattant avec le plus de victoires mais qui n'a pas forcément le meilleur ratio victoires/défaites.
 
 
-#### Visualisation 2 : classement des 10 combattants par nombre total de combats
+#### Visualisation 2 : classement des 10 meilleurs combattants avec le plus grand nombre de combats (au moins 30 combats)
 
-Cette deuxième visualisation permet de vérifier ou non l'hypothèse précédente en visualisant les 10 combattants avec le meilleur ratio victoires/défaites. 
+Cette deuxième visualisation permet de vérifier ou non l'hypothèse précédente en visualisant les 10 combattants avec le meilleur ratio victoires/défaites/no contests. On va prendre un échantillon avec les combattants ayant le plus de combats.
 
 ```{r barchart_combattant}
 # 3. Graphique : Top 10 par nombre total de combats
@@ -1362,12 +1362,109 @@ Ce graphique montre les combattants les plus expérimentés de l’UFC en termes
 On voit que le combattant avec le meilleur ratio correspond bien à celui qui a eu le plus de victoires dans sa carrière. Jim Miller est donc le combattant avec la carrière la plus spectaculaire.
 C'est celui qui a le plus de victoires et le plus de combats à son actif. C'est donc le plus légitime à avoir le statut du combattant le plus spectaculaire.
 
-#### Visualisation 3 : évolution des performances de Jim Miller
+#### Visualisation 3 : classement des 10 meilleurs combattants avec au moins 10 combats
 
-Ce graphique permet de voir l'évolution des performances du meilleur combattant durant le temps et vérifier la légitimité du caractère spectaculaire.
+Cette visualisation va permettre de vérifier si le classement précédent est correct ou non. Il y a sûrement des combattants ayant fait moins de 30 combats avec de meilleurs résultats à l'UFC. 
+
+```{r barchart_combattant2}
+# 4. Graphique des 10 combattants avec le plus de victoires et le moins de défaites/no contests
+library(tidyverse)
+
+# Charger les données
+df <- read.csv("data/complete_ufc_data.csv")
+
+# Nettoyage et construction des stats
+df_clean <- df %>%
+  filter(outcome %in% c("fighter1", "fighter2", "Draw", "No contest")) %>%
+  mutate(
+    winner = case_when(
+      outcome == "fighter1" ~ fighter1,
+      outcome == "fighter2" ~ fighter2,
+      TRUE ~ NA_character_
+    ),
+    loser = case_when(
+      outcome == "fighter1" ~ fighter2,
+      outcome == "fighter2" ~ fighter1,
+      TRUE ~ NA_character_
+    )
+  )
+
+# Compter les victoires
+wins <- df_clean %>%
+  filter(!is.na(winner)) %>%
+  count(winner, name = "wins")
+
+# Compter les défaites
+losses <- df_clean %>%
+  filter(!is.na(loser)) %>%
+  count(loser, name = "losses")
+
+# Compter les no contest
+no_contests <- df_clean %>%
+  filter(outcome == "No contest") %>%
+  pivot_longer(cols = c(fighter1, fighter2), names_to = "role", values_to = "fighter") %>%
+  count(fighter, name = "no_contests")
+
+# Fusionner les dataframes
+all_stats <- full_join(wins, losses, by = c("winner" = "loser")) %>%
+  full_join(no_contests, by = c("winner" = "fighter")) %>%
+  rename(fighter = winner) %>%
+  replace_na(list(wins = 0, losses = 0, no_contests = 0))
+
+# Calcul du ratio
+all_stats <- all_stats %>%
+  mutate(
+    total_fights = wins + losses + no_contests,
+    ratio = if_else((losses + no_contests) > 0, wins / (losses + no_contests), NA_real_)
+  ) %>%
+  filter(!is.na(ratio), total_fights >= 10) %>%
+  arrange(desc(ratio))
+
+# Sélection des 10 meilleurs ratios
+top_ratios <- all_stats %>% slice_max(ratio, n = 10)
+
+# Restructuration des données pour barres empilées
+top_ratios_long <- top_ratios %>%
+  select(fighter, wins, losses, no_contests, ratio) %>%
+  pivot_longer(cols = c(wins, losses, no_contests),
+               names_to = "result",
+               values_to = "count")
+
+top_ratios_long$result <- factor(top_ratios_long$result, levels = c("wins", "losses", "no_contests"))
+
+# Graphique barres empilées
+ggplot(top_ratios_long, aes(x = reorder(fighter, ratio), y = count, fill = result)) +
+  geom_bar(stat = "identity") +
+  coord_flip() +
+  labs(
+    title = "Top 10 des combattants par nombre total de combats",
+    x = "Combattant",
+    y = "Nombre de combats",
+    fill = "Résultat",
+    caption = "Source : Données UFC"
+  ) +
+  theme_minimal() +
+  scale_fill_manual(
+    values = c("wins" = "forestgreen", "losses" = "firebrick", "no_contests" = "gray50"),
+    labels = c("wins" = "Victoires", "losses" = "Défaites", "no_contests" = "No contests")
+  )
+```
+
+**Interprétation :** 
+Le graphique révèle que Jon Jones domine ce classement avec environ 23 combats au total, suivi de près par Georges St-Pierre avec 22 combats. On distingue ensuite un groupe intermédiaire composé de Demetrious Johnson, Kamaru Usman et Amanda Nunes, qui comptabilisent chacun entre 16 et 18 combats.
+
+Islam Makhachev et Alexander Volkanovski affichent un profil similaire avec environ 13-14 combats chacun, tandis que Arnold Allen, Magomed Ankalaev et Don Frye ferment ce top 10 avec approximativement 10-11 combats.
+
+Le graphique montre de façon remarquable que tous ces combattants d'élite partagent une caractéristique commune : une écrasante majorité de victoires (représentées en vert) par rapport aux défaites (en rouge), avec Jon Jones qui se distingue comme le seul à avoir des combats sans décision (no contests, en gris) dans son palmarès.
+
+Au regard de ce graphique et de son palmarès exceptionnel, Jon Jones s'impose indéniablement comme le combattant le plus spectaculaire de l'UFC, ayant non seulement accumulé le plus grand nombre de combats au plus haut niveau, mais ayant également maintenu une domination quasi-absolue tout au long de sa carrière légendaire.
+
+#### Visualisation 4 : évolution des performances de Jim Miller
+
+Ce graphique permet de voir l'évolution des performances d'un des meilleur combattant UFC durant le temps et vérifier la légitimité du caractère spectaculaire. Nous allons donc voir qui de Jim Miller et Jon Jones a les meilleurs performances.
 
 ```{r linechart_jim_miller}
-# 4. Évolution des performances de Jim Miller
+# 5. Évolution des performances de Jim Miller
 
 jim_miller_fights <- data %>%
   filter(fighter1 == "Jim Miller" | fighter2 == "Jim Miller") %>%
@@ -1425,9 +1522,84 @@ ggplot(jim_miller_long, aes(x = event_date, y = value, color = metric)) +
 Le graphique présente l’évolution des performances de Jim Miller au fil de sa carrière à l’UFC, à travers plusieurs indicateurs clés. On observe une alternance régulière de victoires et de défaites, témoignant d’une carrière marquée par une certaine irrégularité sur le plan des résultats.
 Cependant, ses statistiques techniques (précision des frappes, défense des frappes et takedowns moyens) restent globalement stables dans le temps, ce qui s’explique probablement par le fait que le dataset utilise des moyennes sur l’ensemble de sa carrière plutôt que des données combat par combat. Cela rend difficile l’analyse de sa progression réelle au fil du temps, mais on peut tout de même constater une régularité dans ses performances, ce qui reflète sa longévité et sa constance dans l’UFC. Sa précision de frappe tourne autour de 40 %, sa défense avoisine les 60 %, et il maintient une moyenne élevée de 1,6 takedown réussi toutes les 15 minutes. Cela traduit un style de combat bien établi, orienté vers le grappling, ainsi qu’une constance technique malgré les aléas des combats.
 
-##### Conclusion question 7
-D'après nos 3 graphiques, on confirme que Jim Miller est le combattant ayant montré la progression la plus spectaculaire dans ses performances à l’UFC. Il occupe simultanément la première place en nombre total de combats, en nombre de victoires, et affiche une évolution marquée dans ses résultats. Sa longévité dans l’octogone, combinée à une constance et une amélioration notable de ses performances au fil du temps, témoignent d'une trajectoire ascendante remarquable. Contrairement à d'autres combattants dont la carrière a pu être marquée par des hauts et des bas, Jim Miller a su maintenir un haut niveau de compétitivité tout en accumulant les victoires, ce qui reflète une progression solide et durable dans le monde professionnel.
+#### Visualisation 5 : évolution des performances de Jon Jones
 
+```{r linechart_jon_jones}
+# 6. Évolution des performances de Jon Jones
+jones_fights <- df %>%
+  filter(fighter1 == "Jon Jones" | fighter2 == "Jon Jones") %>%
+  mutate(
+    event_date = as.Date(event_date),
+    is_fighter1 = fighter1 == "Jon Jones",
+    sig_strikes_accuracy = if_else(is_fighter1, fighter1_sig_strikes_accuracy, fighter2_sig_strikes_accuracy),
+    takedown_avg_per15m = if_else(is_fighter1, fighter1_takedown_avg_per15m, fighter2_takedown_avg_per15m),
+    sig_strikes_defended = if_else(is_fighter1, fighter1_sig_strikes_defended, fighter2_sig_strikes_defended),
+    outcome_binary = case_when(
+      (outcome == "fighter1" & is_fighter1) | (outcome == "fighter2" & !is_fighter1) ~ 1,
+      outcome %in% c("fighter1", "fighter2") ~ 0,
+      TRUE ~ NA_real_
+    )
+  ) %>%
+  arrange(event_date)
+
+jones_long <- jones_fights %>%
+  select(event_date, outcome_binary, sig_strikes_accuracy, takedown_avg_per15m, sig_strikes_defended) %>%
+  pivot_longer(cols = -event_date, names_to = "metric", values_to = "value") %>%
+  filter(!is.na(value))
+
+ggplot(jones_long, aes(x = event_date, y = value, color = metric)) +
+  geom_step(size = 1) +
+  geom_point(size = 2) +
+  scale_color_manual(
+    values = c(
+      outcome_binary = "darkgreen",
+      sig_strikes_accuracy = "blue",
+      takedown_avg_per15m = "purple",
+      sig_strikes_defended = "orange"
+    ),
+    labels = c(
+      outcome_binary = "Victoire (1 = oui, 0 = non)",
+      sig_strikes_accuracy = "Précision des frappes (%)",
+      takedown_avg_per15m = "Takedowns moyens / 15min",
+      sig_strikes_defended = "Défense des frappes (%)"
+    )
+  ) +
+  labs(
+    title = "Évolution des performances de Jon Jones",
+    subtitle = "Indicateurs clés par combat",
+    x = "Date du combat",
+    y = "Valeur",
+    color = "Indicateur"
+  ) +
+  theme_minimal() +
+  theme(
+    legend.position = "bottom",
+    axis.text.x = element_text(angle = 45, hjust = 1)
+  )
+```
+
+**Interprétation :** 
+Le graphique démontre de manière frappante la domination de Jon Jones avec une ligne verte des victoires maintenue constamment à 1.0 (victoire) sur pratiquement toute sa carrière de 2010 à 2020. Cette constance est remarquable dans un sport aussi imprévisible que les arts martiaux mixtes. La seule interruption visible vers 2011 correspond à une chute brutale vers 0, représentant sa seule défaite officielle dans cette période.
+
+Cette quasi-perfection statistique illustre une maîtrise technique et mentale exceptionnelle qui lui a permis de maintenir un niveau d'excellence sur une décennie complète de compétition au plus haut niveau.
+
+Cependant, comme Jim Miller, on remarque que ses statistiques restent constantes dans le temps, ce qui s’explique probablement par le fait que le dataset utilise des moyennes sur l’ensemble de sa carrière plutôt que des données combat par combat. 
+
+De plus, il possède une précision de frappes hors normes autour de 55-60% et une défense autour de 60-65%. On remarque aussi que Jones n'a jamais abandonné sa base de lutte et maintient une approche complète du combat car il réalise 2 takedowns tous les 15 minutes. 
+
+C'est donc un combattant qui domine tous les aspects du MMA (frappes,défense et lutte) et qui peut être considéré comme le plus spectaculaire.
+
+##### Conclusion question 7
+
+D’après notre analyse graphique, deux figures majeures se démarquent par la singularité et la richesse de leur parcours : Jon Jones et Jim Miller. Bien que radicalement différents, chacun incarne à sa manière une forme de grandeur dans l’histoire de l’UFC.
+
+D’un côté, Jon Jones impressionne par une carrière presque sans faille. Invaincu à l’exception d’une unique défaite controversée et d’un no contest, il affiche une domination technique rare. Sa précision de frappe (57 %), sa défense efficace (64 %) et sa moyenne de 2 takedowns par combat témoignent de sa maîtrise globale du MMA. Il représente le combattant le plus complet et spectaculaire de sa génération.
+
+De l’autre, Jim Miller incarne la longévité et la résilience. Détenteur du record du plus grand nombre de combats et de victoires à l’UFC, il compense des statistiques plus modestes (40 % de précision, 58 % de défense) par une constance admirable et une capacité à rebondir après chaque revers. Sa carrière est un hommage à la persévérance et à l’endurance mentale.
+
+Le contraste entre ces deux légendes dépasse les chiffres. Jones incarne la quête de perfection et la domination implacable, tandis que Miller illustre la force tranquille de ceux qui refusent d’abandonner.
+
+En conclusion, si l’on devait désigner le combattant à la progression la plus spectaculaire, le choix s’impose : Jon Jones, par la constance de ses performances et l’étendue de sa supériorité, s’affirme comme le plus impressionnant.
 
 ### Question 8 : En quoi le style de combat, qu'il soit offensif ou défensif, influence-t-il le déroulement et l'issue d’un combat ?
 
