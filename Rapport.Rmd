@@ -82,6 +82,7 @@ library(lubridate)
 
 
 data <- read_csv("data/complete_ufc_data.csv", show_col_types = FALSE)
+df <- data
 
 ```
 
@@ -1598,8 +1599,10 @@ En conclusion, si l’on devait désigner le combattant à la progression la plu
 
 ### Question 8 : En quoi le style de combat, qu'il soit offensif ou défensif, influence-t-il le déroulement et l'issue d’un combat ?
 
+Nous allons découvrir l'influence qu'a la stratégie de combat sur l'issue de l'affrontement
+
 ```{r load_data}
-df <- read.csv("C:/Users/moham/Downloads/complete_ufc_data (2) (1).csv")
+df <- data
 
 filtered_df <- df %>%
   filter(weight_class %in% c("Featherweight", "Middleweight", "Heavyweight"))
@@ -1617,7 +1620,9 @@ avg_strikes <- sig_strikes %>%
 
 ```
 
-# Différence entre catégories
+
+#### Visualisation 1 : Différence d'activité entre les catégories de poids
+
 ```{r graph}
 ggplot(avg_strikes, aes(x = weight_class, y = avg_strikes, fill = weight_class)) +
   geom_bar(stat = "identity") +
@@ -1631,14 +1636,14 @@ ggplot(avg_strikes, aes(x = weight_class, y = avg_strikes, fill = weight_class))
   theme(legend.position = "none")
 ```
 
-### On observe des différences notables selon la catégorie de poids. Les combattants Featherweight tendent à envoyer plus de frappes significatives par minute, ce qui peut être attribué à leur mobilité et à leur style plus orienté vers les échanges rapides. À l'inverse, les Heavyweights frappent moins souvent mais avec potentiellement plus de puissance. Il faut donc garder à l'esprit le fait que les stratégies de combats peuvent être significativement différentes selon la catégorie de poids.
+**Interprétation :** 
+On observe des différences notables selon la catégorie de poids. Les combattants Featherweight tendent à envoyer plus de frappes significatives par minute, ce qui peut être attribué à leur mobilité et à leur style plus orienté vers les échanges rapides. À l'inverse, les Heavyweights frappent moins souvent mais avec potentiellement plus de puissance. Il faut donc garder à l'esprit le fait que les stratégies de combats peuvent être significativement différentes selon la catégorie de poids.
 
 
 
 
 
-
-# Analyse des différences stratégiques entre les gagnants et les perdants
+#### Visualisation 2 : Analyse des différences stratégiques entre les gagnants et les perdants
 
 ```{r graph_2}
 # Créer une variable "vainqueur"
@@ -1674,7 +1679,8 @@ ggplot(strikes_df, aes(x = result, y = strikes, fill = result)) +
   theme(legend.position = "none")
 ```
 
-### Les vainqueurs envoient généralement plus de frappes significatives par minute que les perdants. Cela suggère qu’un style offensif, basé sur l'activité en striking, est souvent associé à une plus grande probabilité de victoire.
+**Interprétation :** 
+Les vainqueurs envoient généralement plus de frappes significatives par minute que les perdants. Cela suggère qu’un style offensif, basé sur l'activité en striking, est souvent associé à une plus grande probabilité de victoire.
 
 
 ```{r graph_3}
@@ -1702,7 +1708,8 @@ ggplot(takedown_df, aes(x = result, y = takedowns, fill = result)) +
   theme(legend.position = "none")
 ```
 
-### Les gagnants ont, en moyenne, un volume légèrement supérieur de tentatives de takedown. Bien que moins flagrant que pour les frappes, cela montre que les compétences en lutte peuvent jouer un rôle déterminant, notamment en contrôle du combat au sol.
+**Interprétation :** 
+Les gagnants ont, en moyenne, un volume légèrement supérieur de tentatives de takedown. Bien que moins flagrant que pour les frappes, cela montre que les compétences en lutte peuvent jouer un rôle déterminant, notamment en contrôle du combat au sol.
 
 ```{r graph_4}
 # Préparation des données : frappes absorbées
@@ -1729,7 +1736,8 @@ ggplot(absorbed_df, aes(x = result, y = absorbed, fill = result)) +
   theme(legend.position = "none")
 ```
 
-### Les perdants encaissent significativement plus de frappes. Cela confirme qu’encaisser trop de coups sans réponse efficace augmente fortement le risque de défaite.
+**Interprétation :** 
+Les perdants encaissent significativement plus de frappes. Cela confirme qu’encaisser trop de coups sans réponse efficace augmente fortement le risque de défaite.
 
 
 ```{r graph_5}
@@ -1757,7 +1765,8 @@ ggplot(defended_df, aes(x = result, y = defended, fill = result)) +
   theme(legend.position = "none")
 ```
 
-### Les vainqueurs présentent un taux de défense plus élevé. Une meilleure capacité à éviter les frappes semble être un facteur clé pour gagner, notamment en stand-up.
+**Interprétation :** 
+Les vainqueurs présentent un taux de défense plus élevé. Une meilleure capacité à éviter les frappes semble être un facteur clé pour gagner, notamment en stand-up.
 
 ```{r graph_6}
 # Préparation des données : takedown defense
@@ -1784,9 +1793,11 @@ ggplot(td_def_df, aes(x = result, y = defence, fill = result)) +
   theme(legend.position = "none")
 ```
 
-### Une défense de takedown plus solide est associée à la victoire. Cela montre l'importance de résister aux tentatives de mise au sol, en particulier contre des combattants spécialisés en grappling.
+**Interprétation :** 
+Une défense de takedown plus solide est associée à la victoire. Cela montre l'importance de résister aux tentatives de mise au sol, en particulier contre des combattants spécialisés en grappling.
 
-# Mise en avant des tendances favorisant la victoire
+#### Visualisation 3 : Mise en avant des tendances favorisant la victoire
+
 ```{r graph_7}
 # Combiner les frappes envoyées avec le résultat
 f1 <- df_resultat %>%
@@ -1820,7 +1831,8 @@ ggplot(strikes_summary, aes(x = bin, y = taux_victoire)) +
   theme_minimal()
 ```
 
-### Le taux de victoire augmente clairement avec le volume de frappes envoyées. Cela confirme qu’une pression constante et une activité offensive élevée favorisent la victoire.
+**Interprétation :** 
+Le taux de victoire augmente clairement avec le volume de frappes envoyées. Cela confirme qu’une pression constante et une activité offensive élevée favorisent la victoire.
 
 ```{r graph_8}
 # Combiner les frappes encaissées avec le résultat
@@ -1855,7 +1867,8 @@ ggplot(absorbed_summary, aes(x = bin, y = taux_victoire)) +
   theme_minimal()
 ```
 
-### Le taux de victoire diminue avec l'augmentation des frappes encaissées. Cela renforce l'idée qu’une bonne défense et un faible nombre de coups reçus sont essentiels pour gagner.
+**Interprétation :** 
+Le taux de victoire diminue avec l'augmentation des frappes encaissées. Cela renforce l'idée qu’une bonne défense et un faible nombre de coups reçus sont essentiels pour gagner.
 
 ```{r graph_9}
 # Combiner les frappes défendues avec le résultat
@@ -1890,7 +1903,8 @@ ggplot(defended_summary, aes(x = bin, y = taux_victoire)) +
   theme_minimal()
 ```
 
-### Les combattants qui défendent mieux les frappes ont un taux de victoire plus élevé. Cela suggère que l'efficacité défensive, bien que moins visible que l'offensive, est un levier important de performance.
+**Interprétation :**
+Les combattants qui défendent mieux les frappes ont un taux de victoire plus élevé. Cela suggère que l'efficacité défensive, bien que moins visible que l'offensive, est un levier important de performance.
 
 ```{r graph_10}
 # Préparer les données pour gagnants et perdants
@@ -1935,10 +1949,12 @@ ggplot(accuracy_summary, aes(x = bin, y = taux_victoire)) +
   theme_minimal()
 ```
 
-### Les combattants plus précis dans leurs frappes ont un taux de victoire supérieur. La précision est donc une variable de succès, surtout si elle est combinée à un volume élevé.
+**Interprétation :** 
+Les combattants plus précis dans leurs frappes ont un taux de victoire supérieur. La précision est donc une variable de succès, surtout si elle est combinée à un volume élevé.
 
 
-#  Y'a t-il un secteur à privilégier pour espérer gagner
+#### Visualisation 4 : Y'a t-il un secteur à privilégier pour espérer gagner
+
 ```{r graph_11}
 
 # Extraire gagnants et perdants dans les 3 catégories
@@ -2032,4 +2048,5 @@ ggplot(combined_acc_abs, aes(x = accuracy, y = absorbed, color = result)) +
   theme_minimal()
 ```
 
-### Les deux derniers graphiques montrent que les gagnants et les perdants peuvent partager des caractéristiques similaires en matière de volume offensif, de précision ou de défense. Cela signifie qu’un style ou un indicateur isolé ne suffit pas à expliquer le succès. Ce résultat met en évidence la complexité du MMA, où l’issue d’un combat dépend probablement d’un ensemble d’éléments combinés : stratégie, timing, conditions du jour, erreurs adverses, etc.
+**Interprétation :** 
+Les deux derniers graphiques montrent que les gagnants et les perdants peuvent partager des caractéristiques similaires en matière de volume offensif, de précision ou de défense. Cela signifie qu’un style ou un indicateur isolé ne suffit pas à expliquer le succès. Ce résultat met en évidence la complexité du MMA, où l’issue d’un combat dépend probablement d’un ensemble d’éléments combinés : stratégie, timing, conditions du jour, erreurs adverses, etc.
