@@ -1261,115 +1261,7 @@ Tout d'abord, nous allons commencer par mettre en place les statistiques de comb
 ```{r data_combat}
 # 1. Statistiques de base : victoires, défaites, no contests
 
-# Victoires
-df_wins <- data %>%
-  filter(outcome %in% c("fighter1", "fighter2")) %>%
-  mutate(winner = if_else(outcome == "fighter1", fighter1, fighter2)) %>%
-  count(winner, name = "wins") %>%
-  rename(fighter = winner)
-
-# Défaites
-df_losses <- data %>%
-  filter(outcome %in% c("fighter1", "fighter2")) %>%
-  mutate(loser = if_else(outcome == "fighter1", fighter2, fighter1)) %>%
-  count(loser, name = "losses") %>%
-  rename(fighter = loser)
-
-# No contest
-df_nc <- data %>%
-  filter(outcome == "No contest") %>%
-  select(fighter1, fighter2) %>%
-  pivot_longer(cols = everything(), values_to = "fighter") %>%
-  count(fighter, name = "no_contests")
-
-# Fusion des résultats
-results_full <- full_join(df_wins, df_losses, by = "fighter") %>%
-  full_join(df_nc, by = "fighter") %>%
-  mutate(
-    wins = replace_na(wins, 0),
-    losses = replace_na(losses, 0),
-    no_contests = replace_na(no_contests, 0),
-    total_fights = wins + losses + no_contests
-  )
-```
-
-#### Visualisation 1 : les 10 combattants avec le plus de victoires
-
-Ce premier graphique permet de montrer l'aspect qui semble le plus logique : le facteur victoires.
-
-```{r barchart_combattant_victoires}
-# 2. Graphique : Top 10 des combattants avec le plus de victoires
-top_fighters <- results_full %>%
-  slice_max(wins, n = 10)
-
-ggplot(top_fighters, aes(x = reorder(fighter, wins), y = wins, fill = fighter)) +
-  geom_bar(stat = "identity", show.legend = FALSE) +
-  coord_flip() +
-  labs(
-    title = "Top 10 des combattants avec le plus de victoires",
-    x = "Combattant",
-    y = "Nombre de victoires",
-    caption = "Source : Données UFC"
-  ) +
-  theme_minimal() +
-  scale_fill_brewer(palette = "Set3")
-```
-
-**Interprétation :** 
-Ce graphique met en évidence les dix combattants ayant remporté le plus grand nombre de victoires à l’UFC. Jim Miller arrive en tête avec 25 victoires, suivi de près par Donald Cerrone et Andrei Arlovski. On observe également la présence de figures notables comme Demian Maia, Charles Oliveira et Jon Jones. Ce classement reflète non seulement la performance et la régularité de ces combattants, mais aussi leur capacité à maintenir un haut niveau de compétitivité sur le long terme. Il s’agit ici d’un indicateur clé de succès individuel dans l’octogone.
-On voit donc que Jim Miller est le combattant le plus victorieux mais est-ce qu'il est vraiment le combattant ayant la progression la plus spectaculaire. Le graphique répond partiellement à la question car il faudrait vérifier si le combattant avec le plus de victoires n'a pas plus de défaites par rapport aux autres. En effet, on pourrait avoir un combattant avec le plus de victoires mais qui n'a pas forcément le meilleur ratio victoires/défaites.
-
-
-#### Visualisation 2 : classement des 10 meilleurs combattants avec le plus grand nombre de combats (au moins 30 combats)
-
-Cette deuxième visualisation permet de vérifier ou non l'hypothèse précédente en visualisant les 10 combattants avec le meilleur ratio victoires/défaites/no contests. On va prendre un échantillon avec les combattants ayant le plus de combats.
-
-```{r barchart_combattant}
-# 3. Graphique : Top 10 par nombre total de combats
-top10_by_total <- results_full %>%
-  filter(total_fights >= 5) %>%
-  slice_max(total_fights, n = 10)
-
-plot_data <- top10_by_total %>%
-  pivot_longer(cols = c(wins, losses, no_contests), names_to = "result_type", values_to = "count") %>%
-  mutate(result_type = factor(result_type, levels = c("wins", "losses", "no_contests")))
-
-ggplot(plot_data, aes(x = fct_reorder(fighter, total_fights), y = count, fill = result_type)) +
-  geom_bar(stat = "identity") +
-  coord_flip() +
-  scale_fill_manual(
-    values = c("wins" = "darkgreen", "losses" = "firebrick", "no_contests" = "grey50"),
-    labels = c("Victoires", "Défaites", "No Contest")
-  ) +
-  labs(
-    title = "Top 10 des combattants par nombre total de combats",
-    subtitle = "Victoire / Défaite / No Contest",
-    x = "Combattant",
-    y = "Nombre de combats",
-    fill = "Résultat",
-    caption = "Source : Données UFC"
-  ) +
-  theme_minimal() +
-  theme(
-    axis.text = element_text(size = 10),
-    plot.title = element_text(size = 14, face = "bold"),
-    legend.position = "bottom"
-  )
-```
-
-**Interprétation :** 
-Ce graphique montre les combattants les plus expérimentés de l’UFC en termes de nombre total de combats, en distinguant les victoires (vert), les défaites (rouge) et les "No Contest" (gris). Jim Miller domine à nouveau, soulignant à la fois sa longévité et sa constance. Andrei Arlovski et Donald Cerrone figurent également en haut du classement. Ce graphique révèle non seulement l’endurance physique et mentale de ces athlètes sur le long terme, mais aussi leur rôle en tant que piliers de l'organisation. Certains combattants affichent un équilibre entre victoires et défaites, tandis que d’autres se distinguent par leur réussite ou leur persévérance malgré les revers.
-On voit que le combattant avec le meilleur ratio correspond bien à celui qui a eu le plus de victoires dans sa carrière. Jim Miller est donc le combattant avec la carrière la plus spectaculaire.
-C'est celui qui a le plus de victoires et le plus de combats à son actif. C'est donc le plus légitime à avoir le statut du combattant le plus spectaculaire.
-
-#### Visualisation 3 : classement des 10 meilleurs combattants avec au moins 10 combats
-
-Cette visualisation va permettre de vérifier si le classement précédent est correct ou non. Il y a sûrement des combattants ayant fait moins de 30 combats avec de meilleurs résultats à l'UFC. 
-
-```{r barchart_combattant2}
-# 4. Graphique des 10 combattants avec le plus de victoires et le moins de défaites/no contests
-
-# Nettoyage et construction des stats
+# Nettoyage commun
 df_clean <- df %>%
   filter(outcome %in% c("fighter1", "fighter2", "Draw", "No contest")) %>%
   mutate(
@@ -1385,75 +1277,125 @@ df_clean <- df %>%
     )
   )
 
-# Compter les victoires
-wins <- df_clean %>%
-  filter(!is.na(winner)) %>%
-  count(winner, name = "wins")
 
-# Compter les défaites
-losses <- df_clean %>%
-  filter(!is.na(loser)) %>%
-  count(loser, name = "losses")
+# Choix de couleurs
+colors_results <- c(
+  "wins" = "#1b9e77",         # vert 
+  "losses" = "#d95f02",       # orange
+  "no_contests" = "#7570b3"   # violet
+)
 
-# Compter les no contest
+# Fonction pour compter les résultats
+count_result <- function(data, col_name, result_name) {
+  data %>%
+    filter(!is.na(.data[[col_name]])) %>%
+    count(.data[[col_name]], name = result_name) %>%
+    rename(fighter = 1)
+}
+
+wins <- count_result(df_clean, "winner", "wins")
+losses <- count_result(df_clean, "loser", "losses")
+
 no_contests <- df_clean %>%
   filter(outcome == "No contest") %>%
   pivot_longer(cols = c(fighter1, fighter2), names_to = "role", values_to = "fighter") %>%
   count(fighter, name = "no_contests")
 
-# Fusionner les dataframes
-all_stats <- full_join(wins, losses, by = c("winner" = "loser")) %>%
-  full_join(no_contests, by = c("winner" = "fighter")) %>%
-  rename(fighter = winner) %>%
-  replace_na(list(wins = 0, losses = 0, no_contests = 0))
-
-# Calcul du ratio
-all_stats <- all_stats %>%
+# Fusion des statistiques
+all_stats <- full_join(wins, losses, by = "fighter") %>%
+  full_join(no_contests, by = "fighter") %>%
+  replace_na(list(wins = 0, losses = 0, no_contests = 0)) %>%
   mutate(
     total_fights = wins + losses + no_contests,
     ratio = if_else((losses + no_contests) > 0, wins / (losses + no_contests), NA_real_)
-  ) %>%
-  filter(!is.na(ratio), total_fights >= 10) %>%
-  arrange(desc(ratio))
+  )
+```
 
-# Sélection des 10 meilleurs ratios
-top_ratios <- all_stats %>% slice_max(ratio, n = 10)
+#### Visualisation 1 : les 10 combattants avec le plus de victoires
 
-# Restructuration des données pour barres empilées
-top_ratios_long <- top_ratios %>%
-  select(fighter, wins, losses, no_contests, ratio) %>%
-  pivot_longer(cols = c(wins, losses, no_contests),
-               names_to = "result",
-               values_to = "count")
+Ce premier graphique permet de montrer l'aspect qui semble le plus logique : le facteur victoires.
 
-top_ratios_long$result <- factor(top_ratios_long$result, levels = c("wins", "losses", "no_contests"))
+```{r barchart_combattant_victoires}
+# 2. Graphique : Top 10 des combattants avec le plus de victoires
 
-# Graphique barres empilées
-ggplot(top_ratios_long, aes(x = reorder(fighter, ratio), y = count, fill = result)) +
+top_winners <- all_stats %>% slice_max(wins, n = 10)
+
+ggplot(top_winners, aes(x = reorder(fighter, wins), y = wins, fill = fighter)) +
   geom_bar(stat = "identity") +
   coord_flip() +
-  labs(
-    title = "Top 10 des combattants par nombre total de combats",
-    x = "Combattant",
-    y = "Nombre de combats",
-    fill = "Résultat",
-    caption = "Source : Données UFC"
-  ) +
+  labs(title = "Top 10 des combattants avec le plus de victoires", x = "Combattant", y = "Victoires") +
+  theme_minimal() +
+  scale_fill_manual(values = rep("#1b9e77", 10)) +
+  guides(fill = "none")
+```
+
+**Interprétation :** 
+Ce graphique met en évidence les dix combattants ayant remporté le plus grand nombre de victoires à l’UFC. Jim Miller arrive en tête avec 25 victoires, suivi de près par Donald Cerrone et Andrei Arlovski. On observe également la présence de figures notables comme Demian Maia, Charles Oliveira et Jon Jones. Ce classement reflète non seulement la performance et la régularité de ces combattants, mais aussi leur capacité à maintenir un haut niveau de compétitivité sur le long terme. Il s’agit ici d’un indicateur clé de succès individuel dans l’octogone.
+On voit donc que Jim Miller est le combattant le plus victorieux mais est-ce qu'il est vraiment le combattant ayant la progression la plus spectaculaire. Le graphique répond partiellement à la question car il faudrait vérifier si le combattant avec le plus de victoires n'a pas plus de défaites par rapport aux autres. En effet, on pourrait avoir un combattant avec le plus de victoires mais qui n'a pas forcément le meilleur ratio victoires/défaites.
+
+
+#### Visualisation 2 : classement des 10 meilleurs combattants avec le plus grand nombre de combats (au moins 30 combats)
+
+Cette deuxième visualisation permet de vérifier ou non l'hypothèse précédente en visualisant les 10 combattants avec le meilleur ratio victoires/défaites/no contests. On va prendre un échantillon avec les combattants ayant le plus de combats (au moins 30 combats).
+
+```{r barchart_combattant}
+# 3. Graphique : Top 10 par nombre total de combats
+
+top_total <- all_stats %>%
+  filter(total_fights >= 5) %>%
+  slice_max(total_fights, n = 10) %>%
+  pivot_longer(cols = c(wins, losses, no_contests), names_to = "result", values_to = "count") %>%
+  mutate(result = factor(result, levels = c("no_contests", "losses", "wins")))
+
+ggplot(top_total, aes(x = fct_reorder(fighter, total_fights), y = count, fill = result)) +
+  geom_bar(stat = "identity") +
+  coord_flip() +
+  labs(title = "Top 10 par nombre total de combats", x = "Combattant", y = "Nombre de combats", fill = "Résultat") +
   theme_minimal() +
   scale_fill_manual(
-    values = c("wins" = "forestgreen", "losses" = "firebrick", "no_contests" = "gray50"),
-    labels = c("wins" = "Victoires", "losses" = "Défaites", "no_contests" = "No contests")
+    values = colors_results[c("no_contests", "losses", "wins")],
+    labels = c("No Contest", "Défaites", "Victoires"),
   )
 ```
 
 **Interprétation :** 
-Le graphique révèle que Jon Jones domine ce classement avec environ 23 combats au total, suivi de près par Georges St-Pierre avec 22 combats. On distingue ensuite un groupe intermédiaire composé de Demetrious Johnson, Kamaru Usman et Amanda Nunes, qui comptabilisent chacun entre 16 et 18 combats.
+Ce graphique montre les combattants les plus expérimentés de l’UFC en termes de nombre total de combats, en distinguant les victoires, les défaites et les "No Contest". Jim Miller domine à nouveau, soulignant à la fois sa longévité et sa constance. Andrei Arlovski et Donald Cerrone figurent également en haut du classement. Ce graphique révèle non seulement l’endurance physique et mentale de ces athlètes sur le long terme, mais aussi leur rôle en tant que piliers de l'organisation. Certains combattants affichent un équilibre entre victoires et défaites, tandis que d’autres se distinguent par leur réussite ou leur persévérance malgré les revers.
+On voit que le combattant avec le meilleur ratio correspond bien à celui qui a eu le plus de victoires dans sa carrière. Jim Miller serait donc le combattant avec la carrière la plus spectaculaire.
+C'est celui qui a le plus de victoires et le plus de combats à son actif. C'est donc le plus légitime à avoir le statut du combattant le plus spectaculaire.
+Cependant, il faudrait vérifier s'il n'y a pas des combattants avec moins de combats mais un ratio victoires/défaites/no contest beaucoup plus important que Jim Miller.
+
+#### Visualisation 3 : classement des 10 meilleurs combattants avec au moins 10 combats
+
+Cette visualisation va permettre de vérifier si le classement précédent est correct ou non. Il y a sûrement des combattants ayant fait moins de 30 combats avec de meilleurs résultats à l'UFC. 
+
+```{r barchart_combattant2}
+# 4. Graphique des 10 combattants avec le plus de victoires et le moins de défaites/no contests
+
+top_ratios <- all_stats %>%
+  filter(!is.na(ratio), total_fights >= 10) %>%
+  slice_max(ratio, n = 10) %>%
+  pivot_longer(cols = c(wins, losses, no_contests), names_to = "result", values_to = "count") %>%
+  mutate(result = factor(result, levels = c("no_contests", "losses", "wins")))
+
+ggplot(top_ratios, aes(x = reorder(fighter, ratio), y = count, fill = result)) +
+  geom_bar(stat = "identity") +
+  coord_flip() +
+  labs(title = "Top 10 par meilleur ratio victoires/(défaites + NC)", x = "Combattant", y = "Nombre de combats", fill = "Résultat") +
+  theme_minimal() +
+  scale_fill_manual(
+    values = colors_results[c("no_contests", "losses", "wins")],
+    labels = c("No Contest", "Défaites", "Victoires"),
+  )
+```
+
+**Interprétation :** 
+Le graphique révèle que Jon Jones domine ce classement avec environ 23 combats au total dont 21 victoires, suivi de près par Georges St-Pierre avec 22 combats. On distingue ensuite un groupe intermédiaire composé de Demetrious Johnson, Kamaru Usman et Amanda Nunes, qui comptabilisent chacun entre 16 et 18 combats.
 
 Islam Makhachev et Alexander Volkanovski affichent un profil similaire avec environ 13-14 combats chacun, tandis que Arnold Allen, Magomed Ankalaev et Don Frye ferment ce top 10 avec approximativement 10-11 combats.
 
-Le graphique montre de façon remarquable que tous ces combattants d'élite partagent une caractéristique commune : une écrasante majorité de victoires (représentées en vert) par rapport aux défaites (en rouge), avec Jon Jones qui se distingue comme le seul à avoir des combats sans décision (no contests, en gris) dans son palmarès.
+Le graphique montre de façon remarquable que tous ces combattants d'élite partagent une caractéristique commune : une écrasante majorité de victoires par rapport aux défaites, avec Jon Jones qui se distingue avec le meilleur palmarès à l'UFC.
 
-Au regard de ce graphique et de son palmarès exceptionnel, Jon Jones s'impose indéniablement comme le combattant le plus spectaculaire de l'UFC, ayant non seulement accumulé le plus grand nombre de combats au plus haut niveau, mais ayant également maintenu une domination quasi-absolue tout au long de sa carrière légendaire.
+Au regard de ce graphique et de son palmarès exceptionnel, Jon Jones s'impose indéniablement comme le combattant le plus spectaculaire de l'UFC, ayant non seulement accumulé le plus grand nombre de combats au plus haut niveau, mais ayant également maintenu une domination quasiment absolue tout au long de sa carrière légendaire.
 
 #### Visualisation 4 : évolution des performances de Jim Miller
 
@@ -1462,56 +1404,57 @@ Ce graphique permet de voir l'évolution des performances d'un des meilleur comb
 ```{r linechart_jim_miller}
 # 5. Évolution des performances de Jim Miller
 
-jim_miller_fights <- data %>%
-  filter(fighter1 == "Jim Miller" | fighter2 == "Jim Miller") %>%
-  mutate(
-    event_date = as.Date(event_date),
-    is_fighter1 = fighter1 == "Jim Miller",
-    sig_strikes_accuracy = if_else(is_fighter1, fighter1_sig_strikes_accuracy, fighter2_sig_strikes_accuracy),
-    takedown_avg_per15m = if_else(is_fighter1, fighter1_takedown_avg_per15m, fighter2_takedown_avg_per15m),
-    sig_strikes_defended = if_else(is_fighter1, fighter1_sig_strikes_defended, fighter2_sig_strikes_defended),
-    jim_outcome = case_when(
-      (outcome == "fighter1" & is_fighter1) | (outcome == "fighter2" & !is_fighter1) ~ 1,
-      outcome %in% c("fighter1", "fighter2") ~ 0,
-      TRUE ~ NA_real_
+# Fonction d’évolution des performances d’un combattant
+plot_fighter_performance <- function(df, fighter_name, outcome_var = "outcome_indicator") {
+  fighter_data <- df %>%
+    filter(fighter1 == fighter_name | fighter2 == fighter_name) %>%
+    mutate(
+      event_date = as.Date(event_date),
+      is_fighter1 = fighter1 == fighter_name,
+      sig_strikes_accuracy = if_else(is_fighter1, fighter1_sig_strikes_accuracy, fighter2_sig_strikes_accuracy),
+      takedown_avg_per15m = if_else(is_fighter1, fighter1_takedown_avg_per15m, fighter2_takedown_avg_per15m),
+      sig_strikes_defended = if_else(is_fighter1, fighter1_sig_strikes_defended, fighter2_sig_strikes_defended),
+      !!outcome_var := case_when(
+        (outcome == "fighter1" & is_fighter1) | (outcome == "fighter2" & !is_fighter1) ~ 1,
+        outcome %in% c("fighter1", "fighter2") ~ 0,
+        TRUE ~ NA_real_
+      )
+    ) %>%
+    arrange(event_date) %>%
+    select(event_date, all_of(outcome_var), sig_strikes_accuracy, takedown_avg_per15m, sig_strikes_defended) %>%
+    pivot_longer(cols = -event_date, names_to = "metric", values_to = "value") %>%
+    filter(!is.na(value))
+  
+  ggplot(fighter_data, aes(x = event_date, y = value, color = metric)) +
+    geom_step(size = 1) +
+    geom_point(size = 2) +
+    labs(
+      title = paste("Évolution des performances de", fighter_name),
+      subtitle = "Indicateurs clés par combat",
+      x = "Date du combat",
+      y = "Valeur",
+      color = "Indicateur"
+    ) +
+    theme_minimal() +
+    theme(legend.position = "bottom") +
+    scale_color_manual(
+      values = c(
+        outcome_var = colors_results["wins"],
+        sig_strikes_accuracy = "blue",
+        takedown_avg_per15m = "purple",
+        sig_strikes_defended = "orange"
+      ),
+      labels = c(
+        outcome_var = "Victoire (1 = oui, 0 = non)",
+        sig_strikes_accuracy = "Précision frappes (%)",
+        takedown_avg_per15m = "Takedowns / 15min",
+        sig_strikes_defended = "Défense frappes (%)"
+      )
     )
-  ) %>%
-  arrange(event_date)
+}
 
-jim_miller_long <- jim_miller_fights %>%
-  select(event_date, jim_outcome, sig_strikes_accuracy, takedown_avg_per15m, sig_strikes_defended) %>%
-  pivot_longer(cols = -event_date, names_to = "metric", values_to = "value") %>%
-  filter(!is.na(value))
-
-ggplot(jim_miller_long, aes(x = event_date, y = value, color = metric)) +
-  geom_step(size = 1) +
-  geom_point(size = 2) +
-  scale_color_manual(
-    values = c(
-      jim_outcome = "darkgreen",
-      sig_strikes_accuracy = "blue",
-      takedown_avg_per15m = "purple",
-      sig_strikes_defended = "orange"
-    ),
-    labels = c(
-      jim_outcome = "Victoire (1 = oui, 0 = non)",
-      sig_strikes_accuracy = "Précision des frappes (%)",
-      takedown_avg_per15m = "Takedowns moyens / 15min",
-      sig_strikes_defended = "Défense des frappes (%)"
-    )
-  ) +
-  labs(
-    title = "Évolution des performances de Jim Miller au fil de sa carrière",
-    subtitle = "Divers indicateurs clés par date de combat",
-    x = "Date du combat",
-    y = "Valeur",
-    color = "Indicateur"
-  ) +
-  theme_minimal() +
-  theme(
-    legend.position = "bottom",
-    axis.text.x = element_text(angle = 45, hjust = 1)
-  )
+#Graphique des performances de Jim Miller
+plot_fighter_performance(df, "Jim Miller", "jim_outcome")
 ```
 
 **Interprétation :** 
@@ -1522,62 +1465,15 @@ Cependant, ses statistiques techniques (précision des frappes, défense des fra
 
 ```{r linechart_jon_jones}
 # 6. Évolution des performances de Jon Jones
-jones_fights <- df %>%
-  filter(fighter1 == "Jon Jones" | fighter2 == "Jon Jones") %>%
-  mutate(
-    event_date = as.Date(event_date),
-    is_fighter1 = fighter1 == "Jon Jones",
-    sig_strikes_accuracy = if_else(is_fighter1, fighter1_sig_strikes_accuracy, fighter2_sig_strikes_accuracy),
-    takedown_avg_per15m = if_else(is_fighter1, fighter1_takedown_avg_per15m, fighter2_takedown_avg_per15m),
-    sig_strikes_defended = if_else(is_fighter1, fighter1_sig_strikes_defended, fighter2_sig_strikes_defended),
-    outcome_binary = case_when(
-      (outcome == "fighter1" & is_fighter1) | (outcome == "fighter2" & !is_fighter1) ~ 1,
-      outcome %in% c("fighter1", "fighter2") ~ 0,
-      TRUE ~ NA_real_
-    )
-  ) %>%
-  arrange(event_date)
 
-jones_long <- jones_fights %>%
-  select(event_date, outcome_binary, sig_strikes_accuracy, takedown_avg_per15m, sig_strikes_defended) %>%
-  pivot_longer(cols = -event_date, names_to = "metric", values_to = "value") %>%
-  filter(!is.na(value))
-
-ggplot(jones_long, aes(x = event_date, y = value, color = metric)) +
-  geom_step(size = 1) +
-  geom_point(size = 2) +
-  scale_color_manual(
-    values = c(
-      outcome_binary = "darkgreen",
-      sig_strikes_accuracy = "blue",
-      takedown_avg_per15m = "purple",
-      sig_strikes_defended = "orange"
-    ),
-    labels = c(
-      outcome_binary = "Victoire (1 = oui, 0 = non)",
-      sig_strikes_accuracy = "Précision des frappes (%)",
-      takedown_avg_per15m = "Takedowns moyens / 15min",
-      sig_strikes_defended = "Défense des frappes (%)"
-    )
-  ) +
-  labs(
-    title = "Évolution des performances de Jon Jones",
-    subtitle = "Indicateurs clés par combat",
-    x = "Date du combat",
-    y = "Valeur",
-    color = "Indicateur"
-  ) +
-  theme_minimal() +
-  theme(
-    legend.position = "bottom",
-    axis.text.x = element_text(angle = 45, hjust = 1)
-  )
+#Graphique des performances de Jon Jones
+plot_fighter_performance(df, "Jon Jones", "jones_outcome")
 ```
 
 **Interprétation :** 
-Le graphique démontre de manière frappante la domination de Jon Jones avec une ligne verte des victoires maintenue constamment à 1.0 (victoire) sur pratiquement toute sa carrière de 2010 à 2020. Cette constance est remarquable dans un sport aussi imprévisible que les arts martiaux mixtes. La seule interruption visible vers 2011 correspond à une chute brutale vers 0, représentant sa seule défaite officielle dans cette période.
+Le graphique démontre de manière frappante la domination de Jon Jones avec une ligne verte des victoires maintenue constamment à 1.0 (victoire) sur pratiquement toute sa carrière de 2010 à 2020. Cette constance est remarquable dans un sport aussi imprévisible que le MMA. La seule interruption visible vers 2011 correspond à une chute brutale vers 0, représentant sa seule défaite officielle dans cette période.
 
-Cette quasi-perfection statistique illustre une maîtrise technique et mentale exceptionnelle qui lui a permis de maintenir un niveau d'excellence sur une décennie complète de compétition au plus haut niveau.
+Cette quasi-perfection statistique illustre une maîtrise technique et mentale exceptionnelle qui lui a permis de maintenir un niveau d'excellence sur une décennie complète de compétition au plus haut niveau (UFC).
 
 Cependant, comme Jim Miller, on remarque que ses statistiques restent constantes dans le temps, ce qui s’explique probablement par le fait que le dataset utilise des moyennes sur l’ensemble de sa carrière plutôt que des données combat par combat. 
 
