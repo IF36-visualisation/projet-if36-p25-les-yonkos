@@ -4,10 +4,15 @@ author: "IF36 - Les Yonkos"
 date: "UTT - P25"
 output:
   html_document:
+    theme: cerulean 
+    toc: true 
+    toc_float: true 
+    highlight: tango
     warning: false
     message: false
   word_document: default
   pdf_document:
+    toc: true 
     warning: false
     message: false
 editor_options:
@@ -17,7 +22,7 @@ editor_options:
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(
-  echo = TRUE,
+  echo = FALSE,
   warning = FALSE,
   message = FALSE,
   fig.width = 10,
@@ -482,44 +487,121 @@ En effet, le fait que les underdogs gagnent dans plus d'un tiers des cas soulèv
 Nous cherchons à quantifier cette tendance. Nous avons déja tracé précédemment la durée moyenne des combats (qui était de 3 rounds), y a t-il une différence majeure si l'on prend en considération les côtes ?
 Ici, on s'attendrait à ce que les combats soient plus longs si les côtes étaient hautes (adversaires égaux). 
 
-```{r favourite_rounds}
-# Scatterplot cotes vs round pour les favoris gagnants
-ggplot(odds_df %>% filter(betting_outcome == "favourite", favourite_odds <= 2), 
-  aes(x = favourite_odds, y = round)) +
-  geom_jitter(width = 0.1, height = 0.1, alpha = 0.5, color = "#1f77b4") +
-  geom_smooth(method = "lm", se = FALSE, color = "#1f77b4") +
+```{r favourite_rounds_stacked_barplot}
+
+# Préparation des données pour le graphique
+odds_df_summary_fav <- odds_df %>%
+  filter(betting_outcome == "favourite", favourite_odds <= 2, favourite_odds >= 1.0, !is.na(round)) %>%
+  mutate(
+    odds_category = cut(
+      favourite_odds,
+      breaks = seq(1.0, 2.0, by = 0.2),
+      include.lowest = TRUE,
+      right = TRUE,
+      labels = c("1.0-1.2", "1.2-1.4", "1.4-1.6", "1.6-1.8", "1.8-2.0")
+    ),
+    round = as.factor(round) # Traiter round comme un facteur pour la coloration et l'empilement
+  ) %>%
+  filter(!is.na(odds_category)) %>%
+  count(odds_category, round, name = "n_combats") %>% # Compter les combats par catégorie de cote et round
+  group_by(odds_category) %>%
+  mutate(proportion = n_combats / sum(n_combats)) %>% # Calculer la proportion
+  ungroup()
+
+# Création du diagramme en barres empilées normalisées pour les favoris
+ggplot(odds_df_summary_fav, aes(x = odds_category, y = proportion, fill = round)) +
+  geom_col(position = "fill", width = 0.7) + 
+  geom_text(
+    aes(label = ifelse(proportion > 0.03, scales::percent(proportion, accuracy = 1), "")), # Seuil ajusté si besoin 
+    position = position_fill(vjust = 0.5),
+    size = 3.5,
+    color = "white", 
+    fontface = "bold"
+  ) +
+  scale_y_continuous(labels = scales::percent_format()) +
+  scale_fill_brewer(palette = "Blues", direction = 1, name = "Round de fin") + # Palette Blues, direction pour l'ordre
   labs(
-    title = "Cote du favori vs round de fin (Favoris gagnants)",
-    x = "Cote du favori",
-    y = "Round de fin"
+    title = "Répartition des rounds de fin par catégorie de cote du favori (Favoris gagnants)",
+    subtitle = "Pour les combats où le favori a gagné (cote du favori ≤ 2.0)",
+    x = "Catégorie de cote du favori",
+    y = "Proportion des combats"
   ) +
   theme_minimal(base_size = 14) +
   theme(
-    plot.title = element_text(face = "bold", size = 16)
+    plot.title = element_text(face = "bold", size = 16, hjust = 0.5),
+    plot.subtitle = element_text(size = 12, hjust = 0.5, margin = margin(b = 15)),
+    axis.title.x = element_text(face = "bold", margin = margin(t = 10)),
+    axis.title.y = element_text(face = "bold", margin = margin(r = 10)),
+    axis.text.x = element_text(size = 11),
+    legend.title = element_text(face = "bold"),
+    panel.grid.major.x = element_blank(),
+    panel.grid.minor.y = element_blank()
   )
 ```
 
-```{r underdog_rounds}
-# Scatterplot cotes vs round pour les underdogs gagnants
-ggplot(odds_df %>% filter(betting_outcome == "underdog", favourite_odds <= 2), 
-  aes(x = favourite_odds, y = round)) +
-  geom_jitter(width = 0.1, height = 0.1, alpha = 0.5, color = "#ff7f0e") +
-  geom_smooth(method = "lm", se = FALSE, color = "#ff7f0e") +
+```{r underdog_rounds_stacked_barplot}
+# Préparation des données pour le graphique des underdogs
+odds_df_summary_und <- odds_df %>%
+  filter(betting_outcome == "underdog", favourite_odds <= 2, favourite_odds >= 1.0, !is.na(round)) %>% # On garde favourite_odds pour la catégorisation
+  mutate(
+    odds_category = cut(
+      favourite_odds, # Catégorisation basée sur la cote du favori, même si l'underdog gagne
+      breaks = seq(1.0, 2.0, by = 0.2),
+      include.lowest = TRUE,
+      right = TRUE,
+      labels = c("1.0-1.2", "1.2-1.4", "1.4-1.6", "1.6-1.8", "1.8-2.0")
+    ),
+    round = as.factor(round)
+  ) %>%
+  filter(!is.na(odds_category)) %>%
+  count(odds_category, round, name = "n_combats") %>%
+  group_by(odds_category) %>%
+  mutate(proportion = n_combats / sum(n_combats)) %>%
+  ungroup()
+
+# Création du diagramme en barres empilées normalisées pour les underdogs
+ggplot(odds_df_summary_und, aes(x = odds_category, y = proportion, fill = round)) +
+  geom_col(position = "fill", width = 0.7) +
+  geom_text(
+    aes(label = ifelse(proportion > 0.03, scales::percent(proportion, accuracy = 1), "")), # Seuil ajusté si besoin
+    position = position_fill(vjust = 0.5),
+    size = 3.5,
+    color = "white",
+    fontface = "bold"
+  ) +
+  scale_y_continuous(labels = scales::percent_format()) +
+  scale_fill_brewer(palette = "Oranges", direction = 1, name = "Round de fin") + # Palette Oranges, direction pour l'ordre
   labs(
-    title = "Cote du favori vs round de fin (Underdogs gagnants)",
-    x = "Cote du favori",
-    y = "Round de fin"
+    title = "Répartition des rounds de fin par catégorie de cote du favori (Underdogs gagnants)",
+    subtitle = "Pour les combats où l'underdog a gagné (cote du favori ≤ 2.0)",
+    x = "Catégorie de cote du favori",
+    y = "Proportion des combats"
   ) +
   theme_minimal(base_size = 14) +
   theme(
-    plot.title = element_text(face = "bold", size = 16)
+    plot.title = element_text(face = "bold", size = 16, hjust = 0.5),
+    plot.subtitle = element_text(size = 12, hjust = 0.5, margin = margin(b = 15)),
+    axis.title.x = element_text(face = "bold", margin = margin(t = 10)),
+    axis.title.y = element_text(face = "bold", margin = margin(r = 10)),
+    axis.text.x = element_text(size = 11),
+    legend.title = element_text(face = "bold"),
+    panel.grid.major.x = element_blank(),
+    panel.grid.minor.y = element_blank()
   )
 ```
 
-**Interprétation :** On a ici tracé la durée des combats en fonction des cotes du favori lorsque le favori gagne (graphique 1) ou lorsque l'underdog gagne (graphique 2). 
-Les lignes de tendance ne montre pas une grande évolution (surtout en considérent l'intervalle de confiance), mais il est tout de même possible d'en tirer des potentielles conclusions intéressantes :  
-- Sur le premier graphique, on voit que plus les cotes augmentent, plus la durée du combat semble augmenter. Cela confirme notre hypothèse de départ : si la différence de niveau est moins grande, les combats durent plus longtemps (de peu).  
-- Sur le deuxième graphique, on observe les rounds où l'underdog a gagné selon les cotes du favori. Ici, la tendance est la même que sur le premier graphique (voir plus marqué vers la croissance), ce qui est assez surprenant. Ainsi, si la différence de niveau est grande, l'underdog a plus de chances de gagner avec un combat rapide. Cela est sûrement dû à l'effet de surprise et au fait de ne pas laisser le favori imposer son rythme.  
+**Interprétation :**
+
+Ces deux graphiques illustrent la répartition des rounds de fin en fonction des catégories de cotes du favori, pour les cas où le favori gagne (graphique 1, teintes bleu-vert) et où l'underdog gagne (graphique 2, teintes rouge-orange).
+
+*   **Graphique 1 (Favoris gagnants) :**
+    On observe une tendance où la proportion des combats se terminant au **Round 3** augmente légèrement à mesure que la cote du favori se rapproche de 2.0 (matchs perçus comme plus équilibrés). Par exemple, pour les cotes entre 1.0-1.2, environ 41% des victoires des favoris se font au Round 3, tandis que cette proportion monte à 58% pour les cotes de 1.4-1.6 et se maintient à ce niveau. Inversement, la proportion de victoires au **Round 1** diminue lorsque les cotes augmentent (passant de 30% à environ 21-24%). Cela suggère que lorsque le favori est très largement attendu gagnant (cote basse), il a une plus grande probabilité de finir le combat rapidement. Lorsque l'opposition est plus équilibrée (cote plus élevée), les combats ont tendance à durer plus longtemps, souvent jusqu'au Round 3. Les fins aux rounds 4 et 5 restent minoritaires mais sont visibles.
+
+*   **Graphique 2 (Underdogs gagnants) :**
+    Lorsque les underdogs gagnent, on note également que la proportion de victoires au **Round 3** est majoritaire et tend à augmenter avec la cote du favori (passant de 38% pour les cotes 1.0-1.2 à environ 57-60% pour les cotes plus élevées du favori). Cela signifie que même quand un underdog déjoue les pronostics face à un favori dont la cote était élevée (match supposé plus serré), le combat va souvent jusqu'au 3ème round.
+    Fait intéressant, la proportion de victoires des underdogs au **Round 1** est assez conséquente (autour de 33% lorsque le favori a une cote très basse 1.0-1.2, et 22-27% pour les cotes plus élevées). Cela pourrait indiquer que les underdogs capitalisent sur un effet de surprise ou une erreur précoce du favori pour obtenir une victoire rapide, surtout quand ils sont largement donnés perdants. Les victoires aux rounds 4 et 5 sont plus rares pour les underdogs.
+
+En comparant les deux, il semble que le Round 3 soit un point pivot pour la fin des combats, que ce soit pour les favoris ou les underdogs. Cependant, les favoris très marqués ont une plus forte proportion de victoires rapides (Round 1) que les underdogs dans la même situation. Pour les underdogs, une victoire rapide semble être une stratégie viable, surtout face à un grand favori.
 
 #### Visualisation 3 : Précision des cotes
 
@@ -1047,13 +1129,50 @@ p5 <- ggplot(plot_data_valid_fights, aes(x = win_rate, y = career_duration_years
 print(p5)
 ```
 
+
 **Interprétation** :
 
-- **Zone optimale** : taux de victoire entre 50-60%
-- **Carrières courtes** : taux très faibles (<20%) ou très élevés (>90%)
-- **Courbe en dôme** : la longévité maximale correspond à un succès modéré mais constant
+L’analyse des taux de victoire et de la longévité des combattants révèle une tendance intéressante. Les carrières les plus longues ne correspondent pas nécessairement aux taux de victoire les plus élevés, mais plutôt à un succès modéré et constant, situé dans une zone optimale autour de 50 à 60 %. À l’inverse, les combattants affichant des taux de victoire très faibles (inférieurs à 20 %) ou très élevés (supérieurs à 90 %) ont souvent des carrières plus courtes. Cependant, il est important de noter que parmi ceux qui présentent actuellement les meilleurs ratios, beaucoup sont encore en activité et leur carrière n’est donc pas achevée. Cela suggère que la tendance observée pourrait évoluer avec le temps. Globalement, il semble logique que plus un combattant accumule de victoires, plus il a de chances de prolonger sa carrière au sein de l’UFC.
 
-Néanmoins en regardant les noms des combattants avec le meilleur ratio, on voit que la majorité combat encore et que leur carrière n'est pas encore finie. Ainsi la tendance est croissante (et c'est logique). Plus on combattant gagne, et plus il semble rester longtemps dans l'UFC.
+Il y a quelques points qui se démarquent, les combattants ayant 0 victoires mais de longues carrières.
+
+```{r worst_fighters}
+worst_fighters_data <- fighter_stats %>%
+  filter(total_wins == 0, num_fights > 0) %>%
+  filter(is.finite(total_losses) & total_losses > 0) %>% # S'assurer qu'ils ont des défaites
+  filter(is.finite(career_duration_years) & career_duration_years >= 0) %>%
+  arrange(desc(total_losses), desc(career_duration_years)) %>% # Trier par PLUS de défaites, puis par durée de carrière la plus longue
+  mutate(fighter_label = paste0(fighter, " (", num_fights, " combats)")) %>%
+  head(5) # Prendre les 5 premiers pour la lisibilité du graphique
+
+max_career_duration_worst = max(worst_fighters_data$career_duration_years, na.rm = TRUE)
+  
+p_worst_fighters <- ggplot(worst_fighters_data, 
+                               aes(y = reorder(fighter_label, desc(total_losses) * 1e6 + career_duration_years), # Ajustement du reorder pour refléter le tri
+                                   x = career_duration_years)) +
+      geom_col(fill = "firebrick", show.legend = FALSE) +
+      geom_text(aes(label = paste(total_losses, "déf.")), 
+                hjust = -0.2, size = 3.5, color = "black") +
+      labs(
+        title = "Top 5 des Combattants avec 0 Victoire",
+        subtitle = "Triés par nombre de défaites (décroissant) puis par durée de carrière (décroissante).",
+        y = "Combattant (Nombre total de combats)",
+        x = "Durée de Carrière (Années)",
+        caption = "Source: Données UFC agrégées"
+      ) +
+      theme_bw() +
+      theme(
+        axis.text.y = element_text(size = 10),
+        plot.title = element_text(hjust = 0.5, face = "bold", size=14),
+        plot.subtitle = element_text(hjust = 0.5, size = 10),
+        legend.position = "none"
+      ) +
+      coord_cartesian(xlim = c(0, if(max_career_duration_worst > 0) max_career_duration_worst * 1.20 else 1)) 
+
+print(p_worst_fighters)
+```
+
+La plupart de ces combattants ne sont pas mauvais mais ils ont souvent été appelé comme "remplaçant" pour des combats. On peut aussi supposer qu'ils ont été utilisé pour faire grimper la côte de certains combattants.
 
 #### Visualisation 3 : Relation entre coups absorbés et longévité
 
@@ -1075,20 +1194,17 @@ Passons maintenant à l'impact des coups sur la durée de carrière. Ici on peut
     theme(plot.title = element_text(hjust = 0.5), plot.subtitle = element_text(hjust = 0.5))
   print(p1)
 ```
-**Interprétation** : On voit ici :
-
-- **Zone d'augmentation** (0-2.5 coups/minute) : la longévité s'améliore avec un engagement modéré
-- **Plateau optimal** (2.5-4 coups/minute) : zone de performance équilibrée
-- **Déclin** (>5 coups/minute) : diminution significative de la durée de carrière
-
-Cette courbe en cloche suggère qu'un certain niveau d'engagement est bénéfique, mais qu'une exposition excessive aux dommages devient problématique et peut visiblement causer assez de dommages pour arrêter une carrière par accumulation. Cela pourrait aussi simplement être lié au fait que plus un combattant est nul et plus il reçoit de coups, ce qui vient compléter le graphique précédent.
+**Interprétation** : L’analyse du graphique révèle une relation non linéaire entre le nombre moyen de coups significatifs absorbés par minute et la durée de carrière. On observe qu’une exposition modérée aux frappes semble associée à une longévité accrue, tandis qu’une trop grande fréquence de coups reçus tend à réduire la durée de carrière. Ce constat suggère qu’il existe un seuil au-delà duquel l’accumulation des dommages impacte négativement la longévité, probablement en raison des blessures ou de la dégradation progressive des capacités physiques. À l’inverse, une exposition trop faible pourrait refléter un manque d’engagement ou d’expérience, limitant également la longévité. Ainsi, la gestion des risques et la capacité à limiter les dégâts tout en restant actif apparaissent comme des facteurs clés pour prolonger une carrière dans l’UFC.
 
 #### Visualisation 4 : Influence du rythme des combats
 
 Il est possible d'enchaîner directement avec le rythme des combats. On s'attend à ce que trop de combats par an fatigue le combattant et diminue sa durée de carrière.
 
 ```{r combats_frequency_plot}
-p2 <- ggplot(plot_data_base, aes(x = fight_frequency_per_year, y = career_duration_years)) +
+plot_data_p2 <- plot_data_base %>%
+  filter(!(fight_frequency_per_year == 0 & career_duration_years == 0))
+
+p2 <- ggplot(plot_data_p2, aes(x = fight_frequency_per_year, y = career_duration_years)) +
     geom_point(alpha = 0.3, shape = 16, color = "darkgreen") +
     # Utiliser une méthode GAM au lieu de loess avec contrainte de non-négativité
     stat_smooth(method = "gam", formula = y ~ s(x), 
@@ -1106,13 +1222,7 @@ p2 <- ggplot(plot_data_base, aes(x = fight_frequency_per_year, y = career_durati
   print(p2)
 ```
 
-**Interprétation** : La fréquence des combats montre également une relation optimale.
-
-- **Pic de longévité** : environ 1 combat par an
-- **Déclin rapide** : au-delà de 3 combats annuels
-- **Carrières très courtes** : plus de 5 combats par an
-
-Ces données indiquent l'importance d'une récupération adéquate entre les combats pour maintenir une carrière durable.
+**Interprétation** : En observant la relation entre la fréquence des combats et la durée de carrière, on remarque qu’un rythme trop soutenu tend à raccourcir la longévité des combattants. Si un certain niveau d’activité est nécessaire pour progresser et rester compétitif, multiplier les combats chaque année semble exposer à davantage de risques physiques et à l’usure, ce qui peut précipiter la fin de carrière. À l’inverse, espacer raisonnablement ses apparitions dans l’octogone permettrait de mieux récupérer, de limiter l’accumulation des blessures et d’optimiser la préparation, favorisant ainsi une carrière plus longue. Ce constat suggère qu’il existe un équilibre à trouver entre activité et préservation, et que la gestion du calendrier de combats est un facteur stratégique pour la longévité dans le MMA.
 
 #### Visualisation 5 : Relation entre KO subis et longévité
 
@@ -1180,12 +1290,7 @@ if(nrow(plot_data_base %>% filter(is.finite(career_duration_years))) > 0) {
 }
 ```
 
-**Interprétation** : L'analyse des KO révèle une tendance claire :
-
-- **Carrières courtes** (≤0.9 ans) : ~0.24 KO par combat
-- **Carrières moyennes** (0.9-3.4 ans) : ~0.20 KO par combat  
-- **Carrières longues** (>3.4 ans) : ~0.15 KO par combat
-
+**Interprétation** : L’analyse des KO met en évidence une corrélation entre la durée de carrière et la fréquence des KO subis. Les combattants ayant une carrière courte (≤0,9 an) encaissent en moyenne 0,24 KO par combat, tandis que ceux dont la carrière est moyenne (0,9 à 3,4 ans) subissent environ 0,20 KO par combat. Enfin, les carrières longues (>3,4 ans) présentent la plus faible moyenne, avec 0,15 KO par combat.
 Cette progression décroissante confirme que la capacité à éviter les KO est déterminante pour la longévité. Néanmoins, ce n'est pas forcément lié aux dommages physiques, mais simplement que si le combattant est KO, il perd le combat et a donc moins de chances de continué sa carrière à l'UFC.
 
 #### Visualisation 6 : Variations selon la catégorie de poids
@@ -1231,13 +1336,7 @@ if(nrow(plot_data_boxplot) > 0 && length(unique(plot_data_boxplot$main_weight_cl
 }
 ```
 
-**Interprétation** : La distribution par catégorie de poids montre des disparités notables :
-
-- **Catégories favorables** : poids moyens et mi-lourds présentent les médianes de longévité les plus élevées
-- **Catégories moins favorables** : poids mouches masculins montrent des carrières généralement plus courtes
-- **Variabilité importante** : les catégories féminines présentent une grande dispersion
-
-La moyenne est globalement la même partout ce qui confirme la non-corrélation indiquée par la matrice. Le poids n'influent pas sur la durée de carrière.
+**Interprétation** : L’analyse de la distribution de la longévité selon les catégories de poids révèle des disparités intéressantes. Les boxeurs appartenant aux catégories des poids moyens et mi-lourds semblent bénéficier d’une longévité médiane plus élevée, suggérant que ces catégories pourraient offrir des conditions plus favorables à une carrière prolongée. À l’inverse, les poids mouches masculins affichent des carrières généralement plus courtes, ce qui pourrait s’expliquer par des exigences physiques ou des dynamiques propres à cette catégorie. Par ailleurs, une grande variabilité est observée chez les femmes, traduisant une dispersion importante de la durée de carrière dans les catégories féminines. Toutefois, la moyenne de longévité reste relativement stable entre les différentes catégories, ce qui corrobore l’absence de corrélation relevée dans la matrice d’analyse : le poids n’apparaît donc pas comme un facteur déterminant de la durée de carrière.
 
 #### Conclusion question 6
 
