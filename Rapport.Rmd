@@ -1122,7 +1122,7 @@ p5 <- ggplot(plot_data_valid_fights, aes(x = win_rate, y = career_duration_years
       subtitle = "Relation entre le pourcentage de victoires et la longévité (combattants avec ≥ 5 combats)",
       x = "Taux de Victoire (Victoires / Total Combats)",
       y = "Durée de Carrière (Années)",
-      caption = "Source: Données UFC agrégées"
+      caption = "Source: Données UFC"
     ) +
     theme_bw() +
     theme(plot.title = element_text(hjust = 0.5), plot.subtitle = element_text(hjust = 0.5))
@@ -1132,7 +1132,7 @@ print(p5)
 
 **Interprétation** :
 
-L’analyse des taux de victoire et de la longévité des combattants révèle une tendance intéressante. Les carrières les plus longues ne correspondent pas nécessairement aux taux de victoire les plus élevés, mais plutôt à un succès modéré et constant, situé dans une zone optimale autour de 50 à 60 %. À l’inverse, les combattants affichant des taux de victoire très faibles (inférieurs à 20 %) ou très élevés (supérieurs à 90 %) ont souvent des carrières plus courtes. Cependant, il est important de noter que parmi ceux qui présentent actuellement les meilleurs ratios, beaucoup sont encore en activité et leur carrière n’est donc pas achevée. Cela suggère que la tendance observée pourrait évoluer avec le temps. Globalement, il semble logique que plus un combattant accumule de victoires, plus il a de chances de prolonger sa carrière au sein de l’UFC.
+Quand on regarde la relation entre taux de victoire et durée de carrière, on remarque que les carrières les plus longues ne sont pas forcément celles des combattants avec le plus gros pourcentage de victoires. En fait, ceux qui durent le plus sont souvent ceux qui gagnent régulièrement, sans forcément tout écraser (autour de 50 à 60 % de victoires). À l’inverse, ceux qui gagnent très peu ou, au contraire, presque tout le temps, ont souvent des carrières plus courtes — parfois parce qu’ils sont encore en activité ou parce qu’ils quittent vite l’UFC (soit parce qu’ils dominent et partent ailleurs, soit parce qu’ils enchaînent les défaites). Bref, pour durer, il vaut mieux être solide et constant que trop irrégulier, et accumuler les victoires aide clairement à rester plus longtemps dans l’organisation.
 
 Il y a quelques points qui se démarquent, les combattants ayant 0 victoires mais de longues carrières.
 
@@ -1158,7 +1158,7 @@ p_worst_fighters <- ggplot(worst_fighters_data,
         subtitle = "Triés par nombre de défaites (décroissant) puis par durée de carrière (décroissante).",
         y = "Combattant (Nombre total de combats)",
         x = "Durée de Carrière (Années)",
-        caption = "Source: Données UFC agrégées"
+        caption = "Source: Données UFC"
       ) +
       theme_bw() +
       theme(
@@ -1187,14 +1187,14 @@ Passons maintenant à l'impact des coups sur la durée de carrière. Ici on peut
       subtitle = "Relation entre la moyenne des coups significatifs absorbés par minute et la longévité",
       x = "Moy. Coups Significatifs Absorbés / Minute",
       y = "Durée de Carrière (Années)",
-      caption = "Source: Données UFC agrégées"
+      caption = "Source: Données UFC"
     ) +
     theme_bw() +
     coord_cartesian(ylim = c(0, NA), xlim = c(0, 10)) +
     theme(plot.title = element_text(hjust = 0.5), plot.subtitle = element_text(hjust = 0.5))
   print(p1)
 ```
-**Interprétation** : L’analyse du graphique révèle une relation non linéaire entre le nombre moyen de coups significatifs absorbés par minute et la durée de carrière. On observe qu’une exposition modérée aux frappes semble associée à une longévité accrue, tandis qu’une trop grande fréquence de coups reçus tend à réduire la durée de carrière. Ce constat suggère qu’il existe un seuil au-delà duquel l’accumulation des dommages impacte négativement la longévité, probablement en raison des blessures ou de la dégradation progressive des capacités physiques. À l’inverse, une exposition trop faible pourrait refléter un manque d’engagement ou d’expérience, limitant également la longévité. Ainsi, la gestion des risques et la capacité à limiter les dégâts tout en restant actif apparaissent comme des facteurs clés pour prolonger une carrière dans l’UFC.
+**Interprétation** : Ce graphique montre qu’il n’y a pas de règle simple : recevoir un peu de coups ne semble pas trop nuire à la longévité, mais plus on encaisse, plus la carrière a tendance à raccourcir. Il y a donc un équilibre à trouver : rester actif sans trop s’exposer. Ceux qui encaissent beaucoup de frappes voient leur carrière écourtée, sûrement à cause des blessures ou de l’usure. À l’inverse, ceux qui prennent très peu de coups n’ont pas forcément de longues carrières non plus, peut-être parce qu’ils manquent d’expérience ou d’engagement. Bref, savoir limiter les dégâts tout en restant dans l’action, c’est clairement un atout pour durer à l’UFC.
 
 #### Visualisation 4 : Influence du rythme des combats
 
@@ -1214,7 +1214,7 @@ p2 <- ggplot(plot_data_p2, aes(x = fight_frequency_per_year, y = career_duration
       subtitle = "Relation entre le nombre de combats par an et la durée totale de carrière",
       x = "Fréquence des Combats (Combats / An)",
       y = "Durée de Carrière (Années)",
-      caption = "Source: Données UFC agrégées"
+      caption = "Source: Données UFC"
     ) +
     theme_bw() +
     coord_cartesian(ylim = c(0, NA), xlim = c(0, 10)) +
@@ -1222,7 +1222,7 @@ p2 <- ggplot(plot_data_p2, aes(x = fight_frequency_per_year, y = career_duration
   print(p2)
 ```
 
-**Interprétation** : En observant la relation entre la fréquence des combats et la durée de carrière, on remarque qu’un rythme trop soutenu tend à raccourcir la longévité des combattants. Si un certain niveau d’activité est nécessaire pour progresser et rester compétitif, multiplier les combats chaque année semble exposer à davantage de risques physiques et à l’usure, ce qui peut précipiter la fin de carrière. À l’inverse, espacer raisonnablement ses apparitions dans l’octogone permettrait de mieux récupérer, de limiter l’accumulation des blessures et d’optimiser la préparation, favorisant ainsi une carrière plus longue. Ce constat suggère qu’il existe un équilibre à trouver entre activité et préservation, et que la gestion du calendrier de combats est un facteur stratégique pour la longévité dans le MMA.
+**Interprétation** : Quand on regarde la relation entre le rythme des combats et la durée de carrière, on voit qu’enchaîner trop de combats chaque année finit par raccourcir la longévité des combattants. Un peu d’activité est nécessaire pour progresser et rester dans le coup, mais à force d’accumuler les combats, on s’expose à plus de blessures et à l’usure, ce qui peut forcer à arrêter plus tôt. À l’inverse, espacer un peu ses apparitions dans l’octogone laisse le temps de récupérer, de mieux se préparer et d’éviter l’accumulation des pépins physiques. Bref, il faut trouver le bon équilibre entre rester actif et savoir se préserver : bien gérer son calendrier de combats, c’est clairement un atout pour durer dans le MMA.
 
 #### Visualisation 5 : Relation entre KO subis et longévité
 
@@ -1275,7 +1275,7 @@ if(nrow(plot_data_base %>% filter(is.finite(career_duration_years))) > 0) {
         subtitle = paste("Comparaison du taux de KO subis (avec effectifs).\nDéfinitions - ", quantile_labels),
         x = "Catégorie de Longévité de Carrière (avec effectif)",
         y = "Moy. KO Subis par Combat",
-        caption = "Source: Données UFC agrégées"
+        caption = "Source: Données UFC"
       ) +
       theme_bw() +
       theme(legend.position = "none",
@@ -1290,7 +1290,7 @@ if(nrow(plot_data_base %>% filter(is.finite(career_duration_years))) > 0) {
 }
 ```
 
-**Interprétation** : L’analyse des KO met en évidence une corrélation entre la durée de carrière et la fréquence des KO subis. Les combattants ayant une carrière courte (≤0,9 an) encaissent en moyenne 0,24 KO par combat, tandis que ceux dont la carrière est moyenne (0,9 à 3,4 ans) subissent environ 0,20 KO par combat. Enfin, les carrières longues (>3,4 ans) présentent la plus faible moyenne, avec 0,15 KO par combat.
+**Interprétation** : On voit clairement que plus la carrière d’un combattant dure longtemps, moins il subit de KO par combat. Ceux qui restent peu de temps encaissent en moyenne 0,24 KO par combat, contre 0,20 pour une carrière moyenne, et seulement 0,15 pour les plus endurants. Autrement dit, réussir à éviter les KO semble être une vraie clé pour durer dans l’octogone.
 Cette progression décroissante confirme que la capacité à éviter les KO est déterminante pour la longévité. Néanmoins, ce n'est pas forcément lié aux dommages physiques, mais simplement que si le combattant est KO, il perd le combat et a donc moins de chances de continué sa carrière à l'UFC.
 
 #### Visualisation 6 : Variations selon la catégorie de poids
@@ -1324,7 +1324,7 @@ if(nrow(plot_data_boxplot) > 0 && length(unique(plot_data_boxplot$main_weight_cl
       subtitle = "Comparaison de la longévité entre les différentes catégories de poids (avec effectifs)",
       x = "Catégorie de Poids Principale (avec effectif)",
       y = "Durée de Carrière (Années)",
-      caption = "Source: Données UFC agrégées"
+      caption = "Source: Données UFC"
     ) +
     theme_bw() +
     theme(axis.text.x = element_text(angle = 45, hjust = 1, size=8), 
@@ -1336,7 +1336,7 @@ if(nrow(plot_data_boxplot) > 0 && length(unique(plot_data_boxplot$main_weight_cl
 }
 ```
 
-**Interprétation** : L’analyse de la distribution de la longévité selon les catégories de poids révèle des disparités intéressantes. Les boxeurs appartenant aux catégories des poids moyens et mi-lourds semblent bénéficier d’une longévité médiane plus élevée, suggérant que ces catégories pourraient offrir des conditions plus favorables à une carrière prolongée. À l’inverse, les poids mouches masculins affichent des carrières généralement plus courtes, ce qui pourrait s’expliquer par des exigences physiques ou des dynamiques propres à cette catégorie. Par ailleurs, une grande variabilité est observée chez les femmes, traduisant une dispersion importante de la durée de carrière dans les catégories féminines. Toutefois, la moyenne de longévité reste relativement stable entre les différentes catégories, ce qui corrobore l’absence de corrélation relevée dans la matrice d’analyse : le poids n’apparaît donc pas comme un facteur déterminant de la durée de carrière.
+**Interprétation** : Quand on regarde la longévité selon les catégories de poids, on remarque quelques différences intéressantes. Les combattants des catégories moyennes et mi-lourdes semblent avoir des carrières un peu plus longues en moyenne, ce qui laisse penser que ces divisions sont peut-être plus propices à durer dans le temps. À l’inverse, les poids mouches masculins ont souvent des carrières plus courtes, sans doute à cause de contraintes physiques ou du rythme imposé dans cette catégorie. Chez les femmes, la durée de carrière varie beaucoup d’une combattante à l’autre, ce qui se voit dans la dispersion des données. Mais globalement, la moyenne reste assez similaire d’une catégorie à l’autre, ce qui confirme ce qu’on voyait déjà dans la matrice de corrélation : le poids n’est pas vraiment un facteur clé pour expliquer la longévité dans l’UFC.
 
 #### Conclusion question 6
 
@@ -1422,7 +1422,8 @@ top_winners <- all_stats %>% slice_max(wins, n = 10)
 ggplot(top_winners, aes(x = reorder(fighter, wins), y = wins, fill = fighter)) +
   geom_bar(stat = "identity") +
   coord_flip() +
-  labs(title = "Top 10 des combattants avec le plus de victoires", x = "Combattant", y = "Victoires") +
+  labs(title = "Top 10 des combattants avec le plus de victoires", x = "Combattant", y = "Victoires",
+      caption = "Source: Données UFC") +
   theme_minimal() +
   scale_fill_manual(values = rep("#1b9e77", 10)) +
   guides(fill = "none")
@@ -1449,7 +1450,8 @@ top_total <- all_stats %>%
 ggplot(top_total, aes(x = fct_reorder(fighter, total_fights), y = count, fill = result)) +
   geom_bar(stat = "identity") +
   coord_flip() +
-  labs(title = "Top 10 par nombre total de combats", x = "Combattant", y = "Nombre de combats", fill = "Résultat") +
+  labs(title = "Top 10 par nombre total de combats", x = "Combattant", y = "Nombre de combats",
+      caption = "Source: Données UFC", fill = "Résultat") +
   theme_minimal() +
   scale_fill_manual(
     values = colors_results[c("no_contests", "losses", "wins")],
@@ -1479,7 +1481,8 @@ top_ratios <- all_stats %>%
 ggplot(top_ratios, aes(x = reorder(fighter, ratio), y = count, fill = result)) +
   geom_bar(stat = "identity") +
   coord_flip() +
-  labs(title = "Top 10 par meilleur ratio victoires/(défaites + NC)", x = "Combattant", y = "Nombre de combats", fill = "Résultat") +
+  labs(title = "Top 10 par meilleur ratio victoires/(défaites + NC)", x = "Combattant", y = "Nombre de combats",
+      caption = "Source: Données UFC", fill = "Résultat") +
   theme_minimal() +
   scale_fill_manual(
     values = colors_results[c("no_contests", "losses", "wins")],
@@ -1532,6 +1535,7 @@ plot_fighter_performance <- function(df, fighter_name, outcome_var = "outcome_in
       subtitle = "Indicateurs clés par combat",
       x = "Date du combat",
       y = "Valeur",
+      caption = "Source: Données UFC",
       color = "Indicateur"
     ) +
     theme_minimal() +
@@ -1625,7 +1629,8 @@ ggplot(avg_strikes, aes(x = weight_class, y = avg_strikes, fill = weight_class))
   labs(
     title = "Nombre moyen de coups significatifs/min par catégorie de poids",
     x = "Catégorie de poids",
-    y = "Coups/min"
+    y = "Coups/min",
+    caption = "Source: Données UFC"
   ) +
   theme_minimal() +
   theme(legend.position = "none")
@@ -1668,7 +1673,8 @@ ggplot(strikes_df, aes(x = result, y = strikes, fill = result)) +
   labs(
     title = "Frappes significatives par minute : Victoire vs Défaite",
     x = "Résultat du combat",
-    y = "Frappes significatives / min"
+    y = "Frappes significatives / min",
+    caption = "Source: Données UFC"
   ) +
   theme_minimal() +
   theme(legend.position = "none")
@@ -1697,7 +1703,8 @@ ggplot(takedown_df, aes(x = result, y = takedowns, fill = result)) +
   labs(
     title = "Tentatives de takedown par 15 minutes : Victoire vs Défaite",
     x = "Résultat du combat",
-    y = "Tentatives de takedown / 15 min"
+    y = "Tentatives de takedown / 15 min",
+    caption = "Source: Données UFC"
   ) +
   theme_minimal() +
   theme(legend.position = "none")
@@ -1725,7 +1732,8 @@ ggplot(absorbed_df, aes(x = result, y = absorbed, fill = result)) +
   labs(
     title = "Frappes significatives absorbées par minute : Victoire vs Défaite",
     x = "Résultat du combat",
-    y = "Frappes absorbées / min"
+    y = "Frappes absorbées / min",
+    caption = "Source: Données UFC"
   ) +
   theme_minimal() +
   theme(legend.position = "none")
@@ -1754,7 +1762,8 @@ ggplot(defended_df, aes(x = result, y = defended, fill = result)) +
   labs(
     title = "Frappes significatives défendues : Victoire vs Défaite",
     x = "Résultat du combat",
-    y = "Taux de défense des frappes significatives"
+    y = "Taux de défense des frappes significatives",
+    caption = "Source: Données UFC"
   ) +
   theme_minimal() +
   theme(legend.position = "none")
@@ -1782,7 +1791,8 @@ ggplot(td_def_df, aes(x = result, y = defence, fill = result)) +
   labs(
     title = "Taux de défense contre les takedowns : Victoire vs Défaite",
     x = "Résultat du combat",
-    y = "Taux de défense (0 à 1)"
+    y = "Taux de défense (0 à 1)",
+    caption = "Source: Données UFC"
   ) +
   theme_minimal() +
   theme(legend.position = "none")
@@ -1857,7 +1867,8 @@ ggplot(absorbed_summary, aes(x = bin, y = taux_victoire)) +
   labs(
     title = "Taux de victoire selon le volume de frappes significatives encaissées",
     x = "Frappes encaissées / min (tranches)",
-    y = "Taux de victoire"
+    y = "Taux de victoire",
+    caption = "Source: Données UFC"
   ) +
   theme_minimal()
 ```
@@ -1893,7 +1904,8 @@ ggplot(defended_summary, aes(x = bin, y = taux_victoire)) +
   labs(
     title = "Taux de victoire selon le taux de frappes significatives défendues",
     x = "Taux de défense (tranches)",
-    y = "Taux de victoire"
+    y = "Taux de victoire",
+    caption = "Source: Données UFC"
   ) +
   theme_minimal()
 ```
@@ -1939,7 +1951,8 @@ ggplot(accuracy_summary, aes(x = bin, y = taux_victoire)) +
   labs(
     title = "Taux de victoire en fonction de la précision des frappes",
     x = "Précision (tranches)",
-    y = "Taux de victoire"
+    y = "Taux de victoire",
+    caption = "Source: Données UFC"
   ) +
   theme_minimal()
 ```
@@ -1992,6 +2005,7 @@ ggplot(combined_df, aes(
     subtitle = "Gagnants (verts) vs Perdants (rouges)",
     x = "Frappes significatives envoyées / min",
     y = "Taux de frappes significatives défendues",
+    caption = "Source: Données UFC",
     color = "Résultat"
   ) +
   theme_minimal()
@@ -2038,6 +2052,7 @@ ggplot(combined_acc_abs, aes(x = accuracy, y = absorbed, color = result)) +
     subtitle = "Gagnants (verts) vs Perdants (rouges)",
     x = "Précision des frappes significatives",
     y = "Frappes significatives encaissées / min",
+    caption = "Source: Données UFC",
     color = "Résultat"
   ) +
   theme_minimal()
