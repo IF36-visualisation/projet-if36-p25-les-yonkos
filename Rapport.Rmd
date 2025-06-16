@@ -529,11 +529,11 @@ ggplot(odds_df_summary_fav, aes(x = odds_category, y = proportion, fill = round)
     aes(label = ifelse(proportion > 0.03, scales::percent(proportion, accuracy = 1), "")), # Seuil ajusté si besoin 
     position = position_fill(vjust = 0.5),
     size = 3.5,
-    color = "white", 
+    color = "white",
     fontface = "bold"
   ) +
   scale_y_continuous(labels = scales::percent_format()) +
-  scale_fill_brewer(palette = "Blues", direction = 1, name = "Round de fin") + # Palette Blues, direction pour l'ordre
+  scale_fill_brewer(palette = "Blues", direction = -1, name = "Round de fin") + # Palette Blues, direction pour l'ordre
   labs(
     title = "Répartition des rounds de fin par catégorie de cote du favori (Favoris gagnants)",
     subtitle = "Pour les combats où le favori a gagné (cote du favori ≤ 2.0)",
@@ -585,7 +585,7 @@ ggplot(odds_df_summary_und, aes(x = odds_category, y = proportion, fill = round)
     fontface = "bold"
   ) +
   scale_y_continuous(labels = scales::percent_format()) +
-  scale_fill_brewer(palette = "Oranges", direction = 1, name = "Round de fin") + # Palette Oranges, direction pour l'ordre
+  scale_fill_brewer(palette = "Oranges", direction = -1, name = "Round de fin") + # Palette Oranges, direction pour l'ordre
   labs(
     title = "Répartition des rounds de fin par catégorie de cote du favori (Underdogs gagnants)",
     subtitle = "Pour les combats où l'underdog a gagné (cote du favori ≤ 2.0)",
