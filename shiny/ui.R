@@ -33,7 +33,7 @@ ui <- navbarPage(
            div(class = "well",
                sliderInput("minFights", 
                            "Nombre minimum de combats :", 
-                           min = 5, max = 40, value = 10, step = 5),
+                           min = 10, max = 30, value = 10, step = 5),
                h2("Classement des 10 meilleurs combattants (ratio victoires / défaites et no contest)"),
                plotOutput("topRatio")
            )

@@ -1521,7 +1521,14 @@ Islam Makhachev et Alexander Volkanovski affichent un profil similaire avec envi
 
 Le graphique montre de façon remarquable que tous ces combattants d'élite partagent une caractéristique commune : une écrasante majorité de victoires par rapport aux défaites, avec Jon Jones qui se distingue avec le meilleur palmarès à l'UFC.
 
+Ce graphique, réalisé à l’aide d’une Shiny app ![Classement des combattants](img/capture_shinyapp.jpg)
+, confirme parfaitement cette observation. Il permet de filtrer les combattants selon le nombre de combats, offrant ainsi la possibilité d’analyser les différents ratios pour des seuils allant de 10 à 40 combats.
+Il reprend ainsi les idées des graphiques précédents.
+
 Au regard de ce graphique et de son palmarès exceptionnel, Jon Jones s'impose indéniablement comme le combattant le plus spectaculaire de l'UFC, ayant non seulement accumulé le plus grand nombre de combats au plus haut niveau, mais ayant également maintenu une domination quasiment absolue tout au long de sa carrière légendaire.
+
+
+
 
 #### Visualisation 4 : évolution des performances de Jim Miller
 
