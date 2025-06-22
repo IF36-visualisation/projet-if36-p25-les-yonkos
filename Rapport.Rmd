@@ -1200,7 +1200,7 @@ print(p5)
 
 **Interprétation** :
 
-Quand on regarde la relation entre taux de victoire et durée de carrière, on remarque que les carrières les plus longues ne sont pas forcément celles des combattants avec le plus gros pourcentage de victoires. En fait, ceux qui durent le plus sont souvent ceux qui gagnent régulièrement, sans forcément tout écraser (autour de 50 à 60 % de victoires). À l’inverse, ceux qui gagnent très peu ou, au contraire, presque tout le temps, ont souvent des carrières plus courtes — parfois parce qu’ils sont encore en activité ou parce qu’ils quittent vite l’UFC (soit parce qu’ils dominent et partent ailleurs, soit parce qu’ils enchaînent les défaites). Bref, pour durer, il vaut mieux être solide et constant que trop irrégulier, et accumuler les victoires aide clairement à rester plus longtemps dans l’organisation.
+Quand on regarde la relation entre taux de victoire et durée de carrière, on remarque que les carrières les plus longues ne sont pas forcément celles des combattants avec le plus gros pourcentage de victoires. En fait, ceux qui durent le plus sont souvent ceux qui gagnent régulièrement, sans forcément tout écraser (autour de 50 à 60 % de victoires). À l’inverse, ceux qui gagnent très peu ou, au contraire, presque tout le temps, ont souvent des carrières plus courtes — parfois parce qu’ils sont encore en activité ou parce qu’ils quittent vite l’UFC (soit parce qu’ils dominent et partent ailleurs, soit parce qu’ils enchaînent les défaites). Pour durer, il vaut mieux être solide et constant que trop irrégulier, et accumuler les victoires aide clairement à rester plus longtemps dans l’organisation.
 
 Il y a quelques points qui se démarquent, les combattants ayant 0 victoires mais de longues carrières.
 
@@ -1262,7 +1262,10 @@ Passons maintenant à l'impact des coups sur la durée de carrière. Ici on peut
     theme(plot.title = element_text(hjust = 0.5), plot.subtitle = element_text(hjust = 0.5))
   print(p1)
 ```
-**Interprétation** : Ce graphique montre qu’il n’y a pas de règle simple : recevoir un peu de coups ne semble pas trop nuire à la longévité, mais plus on encaisse, plus la carrière a tendance à raccourcir. Il y a donc un équilibre à trouver : rester actif sans trop s’exposer. Ceux qui encaissent beaucoup de frappes voient leur carrière écourtée, sûrement à cause des blessures ou de l’usure. À l’inverse, ceux qui prennent très peu de coups n’ont pas forcément de longues carrières non plus, peut-être parce qu’ils manquent d’expérience ou d’engagement. Bref, savoir limiter les dégâts tout en restant dans l’action, c’est clairement un atout pour durer à l’UFC.
+**Interprétation** : Ce graphique montre qu’il n’y a pas de règle simple : recevoir un peu de coups ne semble pas trop nuire à la longévité, mais plus on encaisse, plus la carrière a tendance à raccourcir. Il y a donc un équilibre à trouver : rester actif sans trop s’exposer. Ceux qui encaissent beaucoup de frappes voient leur carrière écourtée, sûrement à cause des blessures ou de l’usure. À l’inverse, ceux qui prennent très peu de coups n’ont pas forcément de longues carrières non plus, peut-être parce qu’ils manquent d’expérience ou d’engagement. De ce fait, savoir limiter les dégâts tout en restant dans l’action semble être un atout pour durer à l’UFC.
+
+Ce graphique a aussi été tracé sur Shiny. Il est possible d'afficher le graphique selon le nombre de coups significatifs absorbés par minute, mais aussi par combat et sur toute la carrière. Pour les coups par combats, bien que la courbe varie moins, la tendance est la même. Sur la carrière, il est logique que plus un combattant reste dans l'UFC et plus il recevra de coups au total. Néanmoins, le fait que la courbe ne soit pas linéaire montre que les combattants avec une carrière plus longue se prenne moins de coups sur une période donnée. 
+
 
 #### Visualisation 4 : Influence du rythme des combats
 
@@ -1290,7 +1293,7 @@ p2 <- ggplot(plot_data_p2, aes(x = fight_frequency_per_year, y = career_duration
   print(p2)
 ```
 
-**Interprétation** : Quand on regarde la relation entre le rythme des combats et la durée de carrière, on voit qu’enchaîner trop de combats chaque année finit par raccourcir la longévité des combattants. Un peu d’activité est nécessaire pour progresser et rester dans le coup, mais à force d’accumuler les combats, on s’expose à plus de blessures et à l’usure, ce qui peut forcer à arrêter plus tôt. À l’inverse, espacer un peu ses apparitions dans l’octogone laisse le temps de récupérer, de mieux se préparer et d’éviter l’accumulation des pépins physiques. Bref, il faut trouver le bon équilibre entre rester actif et savoir se préserver : bien gérer son calendrier de combats, c’est clairement un atout pour durer dans le MMA.
+**Interprétation** : Quand on regarde la relation entre le rythme des combats et la durée de carrière, on voit qu’enchaîner trop de combats chaque année finit par raccourcir la longévité des combattants. Un peu d’activité est nécessaire pour progresser et rester dans le coup, mais à force d’accumuler les combats, on s’expose à plus de blessures et à l’usure, ce qui peut forcer à arrêter plus tôt. À l’inverse, espacer un peu ses apparitions dans l’octogone laisse le temps de récupérer, de mieux se préparer et d’éviter l’accumulation des pépins physiques. Ainsi, il faut trouver le bon équilibre entre rester actif et savoir se préserver : bien gérer son calendrier de combats est clairement un atout pour durer dans le MMA.
 
 #### Visualisation 5 : Relation entre KO subis et longévité
 
@@ -1564,6 +1567,9 @@ Le graphique révèle que Jon Jones domine ce classement avec environ 23 combats
 Islam Makhachev et Alexander Volkanovski affichent un profil similaire avec environ 13-14 combats chacun, tandis que Arnold Allen, Magomed Ankalaev et Don Frye ferment ce top 10 avec approximativement 10-11 combats.
 
 Le graphique montre de façon remarquable que tous ces combattants d'élite partagent une caractéristique commune : une écrasante majorité de victoires par rapport aux défaites, avec Jon Jones qui se distingue avec le meilleur palmarès à l'UFC.
+
+Ce graphiquea aussi été réalisé sur la Shiny app. Il permet de filtrer les combattants selon le nombre de combats, offrant ainsi la possibilité d’analyser les différents ratios pour des seuils allant de 10 à 40 combats.
+Il reprend ainsi les idées des graphiques précédents.
 
 Au regard de ce graphique et de son palmarès exceptionnel, Jon Jones s'impose indéniablement comme le combattant le plus spectaculaire de l'UFC, ayant non seulement accumulé le plus grand nombre de combats au plus haut niveau, mais ayant également maintenu une domination quasiment absolue tout au long de sa carrière légendaire.
 
