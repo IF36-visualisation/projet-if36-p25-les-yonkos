@@ -606,18 +606,62 @@ ggplot(odds_df_summary_und, aes(x = odds_category, y = proportion, fill = round)
   )
 ```
 
+```{r underdog_odds_barplot_percentage}
+# Préparation des données pour le graphique des underdogs (normalisé)
+odds_df_summary_und <- odds_df %>%
+  filter(
+    betting_outcome == "underdog",
+    favourite_odds <= 2, favourite_odds >= 1.0
+  ) %>%
+  mutate(
+    odds_category = cut(
+      favourite_odds,
+      breaks = seq(1.0, 2.0, by = 0.2),
+      include.lowest = TRUE,
+      right = TRUE,
+      labels = c("1.0-1.2", "1.2-1.4", "1.4-1.6", "1.6-1.8", "1.8-2.0")
+    )
+  ) %>%
+  filter(!is.na(odds_category)) %>%
+  count(odds_category, name = "n_combats") %>%
+  mutate(percent_combats = n_combats / sum(n_combats) * 100)
+
+ggplot(odds_df_summary_und, aes(x = odds_category, y = percent_combats)) +
+  geom_col(fill = "#ff7f0e", width = 0.7) +
+  geom_text(aes(label = paste0(round(percent_combats, 1), "%")),
+            vjust = -0.5, size = 4) +
+  labs(
+    title = "Pourcentage de victoires des underdogs selon la cote du favori",
+    subtitle = "Pour les combats où l'underdog a gagné (cote du favori ≤ 2.0)",
+    x = "Catégorie de cote du favori",
+    y = "Pourcentage de victoires underdog",
+    caption = "Source: Données UFC"
+  ) +
+  theme_minimal(base_size = 14) +
+  theme(
+    plot.title = element_text(face = "bold", size = 16, hjust = 0.5),
+    plot.subtitle = element_text(size = 12, hjust = 0.5, margin = margin(b = 15)),
+    axis.title.x = element_text(face = "bold", margin = margin(t = 10)),
+    axis.title.y = element_text(face = "bold", margin = margin(r = 10)),
+    axis.text.x = element_text(size = 11)
+  )
+```
+
 **Interprétation :**
 
-Ces deux graphiques illustrent la répartition des rounds de fin en fonction des catégories de cotes du favori, pour les cas où le favori gagne (graphique 1, teintes bleu-vert) et où l'underdog gagne (graphique 2, teintes rouge-orange).
+Ces trois graphiques illustrent la répartition des issues de combat en fonction des cotes, en se concentrant sur le round de fin et la fréquence des victoires des underdogs.
 
 *   **Graphique 1 (Favoris gagnants) :**
     On observe une tendance où la proportion des combats se terminant au **Round 3** augmente légèrement à mesure que la cote du favori se rapproche de 2.0 (matchs perçus comme plus équilibrés). Par exemple, pour les cotes entre 1.0-1.2, environ 41% des victoires des favoris se font au Round 3, tandis que cette proportion monte à 58% pour les cotes de 1.4-1.6 et se maintient à ce niveau. Inversement, la proportion de victoires au **Round 1** diminue lorsque les cotes augmentent (passant de 30% à environ 21-24%). Cela suggère que lorsque le favori est très largement attendu gagnant (cote basse), il a une plus grande probabilité de finir le combat rapidement. Lorsque l'opposition est plus équilibrée (cote plus élevée), les combats ont tendance à durer plus longtemps, souvent jusqu'au Round 3. Les fins aux rounds 4 et 5 restent minoritaires mais sont visibles.
 
 *   **Graphique 2 (Underdogs gagnants) :**
     Lorsque les underdogs gagnent, on note également que la proportion de victoires au **Round 3** est majoritaire et tend à augmenter avec la cote du favori (passant de 38% pour les cotes 1.0-1.2 à environ 57-60% pour les cotes plus élevées du favori). Cela signifie que même quand un underdog déjoue les pronostics face à un favori dont la cote était élevée (match supposé plus serré), le combat va souvent jusqu'au 3ème round.
-    Fait intéressant, la proportion de victoires des underdogs au **Round 1** est assez conséquente (autour de 33% lorsque le favori a une cote très basse 1.0-1.2, et 22-27% pour les cotes plus élevées). Cela pourrait indiquer que les underdogs capitalisent sur un effet de surprise ou une erreur précoce du favori pour obtenir une victoire rapide, surtout quand ils sont largement donnés perdants. Les victoires aux rounds 4 et 5 sont plus rares pour les underdogs.
+    Fait intéressant, la proportion de victoires des underdogs au **Round 1** est assez conséquente (autour de 33% lorsque le favori a une cote très basse 1.0-1.2, et 22-27% pour les cotes plus élevées). Cela pourrait indiquer que les underdogs capitalisent sur un effet de surprise ou une erreur précoce du favori pour obtenir une victoire rapide, surtout quand ils sont largement donnés perdants.
 
-En comparant les deux, il semble que le Round 3 soit un point pivot pour la fin des combats, que ce soit pour les favoris ou les underdogs. Cependant, les favoris très marqués ont une plus forte proportion de victoires rapides (Round 1) que les underdogs dans la même situation. Pour les underdogs, une victoire rapide semble être une stratégie viable, surtout face à un grand favori.
+*   **Graphique 3 (Proportion des victoires des underdogs) :**
+    Ce graphique met en contexte les victoires des underdogs. Il montre que la grande majorité des "surprises" se produisent lorsque les combats sont déjà perçus comme relativement serrés. En effet, **36%** de toutes les victoires d'underdogs ont lieu lorsque la cote du favori est entre 1.6 et 1.8. À l'inverse, les véritables exploits contre des favoris écrasants (cote de 1.0-1.2) ne représentent que **2%** des victoires d'underdogs. Cela confirme que si les upsets sont possibles, ils sont beaucoup plus probables lorsque les niveaux des combattants sont jugés proches par les bookmakers. Cela atténue aussi le fait que les underdogs peuvent gagner rapidement le combat au final.
+
+En combinant les informations, on peut conclure que le Round 3 est un moment clé, surtout dans les combats équilibrés, que le favori ou l'underdog l'emporte. Les favoris très marqués ont tendance à finir les combats plus tôt (Round 1). Les underdogs, quant à eux, gagnent le plus souvent lorsque le combat est déjà annoncé comme serré. Cependant, lorsqu'ils créent une grosse surprise contre un grand favori, ils le font de manière disproportionnée au Round 1, capitalisant probablement sur un KO ou une soumission rapide.
 
 #### Visualisation 3 : Précision des cotes
 
@@ -1521,14 +1565,7 @@ Islam Makhachev et Alexander Volkanovski affichent un profil similaire avec envi
 
 Le graphique montre de façon remarquable que tous ces combattants d'élite partagent une caractéristique commune : une écrasante majorité de victoires par rapport aux défaites, avec Jon Jones qui se distingue avec le meilleur palmarès à l'UFC.
 
-Ce graphique, réalisé à l’aide d’une Shiny app ![Classement des combattants](img/capture_shinyapp.jpg)
-, confirme parfaitement cette observation. Il permet de filtrer les combattants selon le nombre de combats, offrant ainsi la possibilité d’analyser les différents ratios pour des seuils allant de 10 à 40 combats.
-Il reprend ainsi les idées des graphiques précédents.
-
 Au regard de ce graphique et de son palmarès exceptionnel, Jon Jones s'impose indéniablement comme le combattant le plus spectaculaire de l'UFC, ayant non seulement accumulé le plus grand nombre de combats au plus haut niveau, mais ayant également maintenu une domination quasiment absolue tout au long de sa carrière légendaire.
-
-
-
 
 #### Visualisation 4 : évolution des performances de Jim Miller
 
