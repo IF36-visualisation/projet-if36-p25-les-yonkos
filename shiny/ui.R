@@ -88,37 +88,37 @@ dashboardPage(
       font-size: 17px;
     }
   "))
-),
+    ),
     tabItems(
       tabItem(tabName = "topratios",
-        fluidRow(
-          box(
-            width = 12, status = "primary", solidHeader = TRUE,
-            title = "Classement des 10 meilleurs combattants (ratio victoires / défaites et no contest)",
-            sliderInput("minFights", 
-                        "Nombre minimum de combats :", 
-                        min = 10, max = 30, value = 10, step = 5),
-            plotOutput("topRatio", height = "500px")
-          )
-        )
+              fluidRow(
+                box(
+                  width = 12, status = "primary", solidHeader = TRUE,
+                  title = "Classement des 10 meilleurs combattants (ratio victoires / défaites et no contest)",
+                  sliderInput("minFights", 
+                              "Nombre minimum de combats :", 
+                              min = 10, max = 30, value = 10, step = 5),
+                  plotOutput("topRatio", height = "500px")
+                )
+              )
       ),
       tabItem(tabName = "longevite",
-        fluidRow(
-          box(
-            width = 12, status = "success", solidHeader = TRUE,
-            title = "Impact des Coups Absorbés sur la Durée de Carrière",
-            selectInput("damage_type", "Type de coups absorbés :", 
-                        choices = c(
-                          "Par minute" = "pm",
-                          "Par combat" = "per_fight",
-                          "Total carrière" = "total"
-                        ),
-                        selected = "pm"),
-            plotOutput("damagePlot", height = "500px"),
-            tags$div(style="margin-top:15px; color:#888; font-size:13px;",
-                     "Source: Données UFC")
-          )
-        )
+              fluidRow(
+                box(
+                  width = 12, status = "success", solidHeader = TRUE,
+                  title = "Impact des Coups Absorbés sur la Durée de Carrière",
+                  selectInput("damage_type", "Type de coups absorbés :", 
+                              choices = c(
+                                "Par minute" = "pm",
+                                "Par combat" = "per_fight",
+                                "Total carrière" = "total"
+                              ),
+                              selected = "pm"),
+                  plotOutput("damagePlot", height = "500px"),
+                  tags$div(style="margin-top:15px; color:#888; font-size:13px;",
+                           "Source: Données UFC")
+                )
+              )
       )
     )
   )

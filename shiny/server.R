@@ -6,22 +6,44 @@ library(forcats)
 # Lecture des données
 df <- read_csv("../data/complete_ufc_data.csv", show_col_types = FALSE)
 
-all_stats <- df %>%
-  pivot_longer(cols = c(fighter1, fighter2), names_to = "role", values_to = "fighter") %>%
-  filter(!is.na(fighter) & fighter != "") %>%
-  group_by(fighter) %>%
-  summarise(
-    wins = sum((role == "fighter1" & winner == "fighter1") | (role == "fighter2" & winner == "fighter2"), na.rm = TRUE),
-    losses = sum((role == "fighter1" & winner == "fighter2") | (role == "fighter2" & winner == "fighter1"), na.rm = TRUE),
-    no_contests = sum(winner == "no contest", na.rm = TRUE),
-    total_fights = n()
-  ) %>%
+df_clean <- df %>%
+  filter(outcome %in% c("fighter1", "fighter2", "Draw", "No contest")) %>%
   mutate(
+    winner = case_when(outcome == "fighter1" ~ fighter1,
+                       outcome == "fighter2" ~ fighter2,
+                       TRUE ~ NA_character_),
+    loser = case_when(outcome == "fighter1" ~ fighter2,
+                      outcome == "fighter2" ~ fighter1,
+                      TRUE ~ NA_character_)
+  )
+
+count_result <- function(data, col_name, result_name) {
+  data %>%
+    filter(!is.na(.data[[col_name]])) %>%
+    count(.data[[col_name]], name = result_name) %>%
+    rename(fighter = 1)
+}
+
+wins <- count_result(df_clean, "winner", "wins")
+losses <- count_result(df_clean, "loser", "losses")
+
+no_contests <- df_clean %>%
+  filter(outcome == "No contest") %>%
+  pivot_longer(cols = c(fighter1, fighter2), names_to = "role", values_to = "fighter") %>%
+  count(fighter, name = "no_contests")
+
+all_stats <- full_join(wins, losses, by = "fighter") %>%
+  full_join(no_contests, by = "fighter") %>%
+  replace_na(list(wins = 0, losses = 0, no_contests = 0)) %>%
+  mutate(
+    total_fights = wins + losses + no_contests,
     ratio = if_else((losses + no_contests) > 0, wins / (losses + no_contests), NA_real_)
   )
-  
-server <- function(input, output) {
 
+colors_results <- c("wins" = "#1b9e77", "losses" = "#d95f02", "no_contests" = "#7570b3")
+
+server <- function(input, output) {
+  
   output$topRatio <- renderPlot({
     all_stats %>%
       filter(!is.na(ratio), total_fights >= input$minFights) %>%
@@ -32,7 +54,17 @@ server <- function(input, output) {
       geom_col() +
       coord_flip() +
       labs(x = "Combattant", y = "Nombre de combats", fill = "Résultat") +
-      theme_minimal() +
+      theme_minimal(base_size = 18) +
+      theme(
+        plot.title = element_text(face = "bold", size = 22, color = "#3498db", hjust = 0.5),
+        plot.subtitle = element_text(size = 16, color = "#1b9e77", hjust = 0.5),
+        axis.title.x = element_text(face = "bold", size = 17),
+        axis.title.y = element_text(face = "bold", size = 17),
+        axis.text.x = element_text(size = 15),
+        axis.text.y = element_text(size = 15),
+        legend.title = element_text(face = "bold", size = 16),
+        legend.text = element_text(size = 15)
+      ) +
       scale_fill_manual(values = colors_results,
                         labels = c("No Contest", "Défaites", "Victoires"))
   })
@@ -63,19 +95,19 @@ server <- function(input, output) {
       career_duration_years = as.numeric(difftime(last_fight, first_fight, units = "days")) / 365.25
     ) %>%
     filter(num_fights > 0, is.finite(career_duration_years), career_duration_years > 0)
-
+  
   output$damagePlot <- renderPlot({
     req(input$damage_type)
     ylab <- "Durée de Carrière (Années)"
     xlab <- switch(input$damage_type,
-      "pm" = "Moy. Coups Significatifs Absorbés / Minute",
-      "per_fight" = "Moy. Coups Significatifs Absorbés / Combat",
-      "total" = "Total Coups Significatifs Absorbés en Carrière"
+                   "pm" = "Moy. Coups Significatifs Absorbés / Minute",
+                   "per_fight" = "Moy. Coups Significatifs Absorbés / Combat",
+                   "total" = "Total Coups Significatifs Absorbés en Carrière"
     )
     xvar <- switch(input$damage_type,
-      "pm" = fighter_stats$avg_sig_strikes_absorbed_pm,
-      "per_fight" = fighter_stats$avg_sig_strikes_absorbed_per_fight,
-      "total" = fighter_stats$total_sig_strikes_absorbed
+                   "pm" = fighter_stats$avg_sig_strikes_absorbed_pm,
+                   "per_fight" = fighter_stats$avg_sig_strikes_absorbed_per_fight,
+                   "total" = fighter_stats$total_sig_strikes_absorbed
     )
     ggplot(fighter_stats, aes(x = xvar, y = career_duration_years)) +
       geom_point(alpha = 0.3, shape = 16, color = "#1b9e77") +
@@ -89,9 +121,9 @@ server <- function(input, output) {
       coord_cartesian(
         ylim = c(0, NA),
         xlim = switch(input$damage_type,
-          "pm" = c(0, 10),
-          "per_fight" = c(0, 125),
-          "total" = c(0, 1750)
+                      "pm" = c(0, 10),
+                      "per_fight" = c(0, 125),
+                      "total" = c(0, 1750)
         )
       ) +
       theme(
